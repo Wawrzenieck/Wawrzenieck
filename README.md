@@ -10,11 +10,13 @@
   <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=wawrzenieck&layout=compact&langs_count=7&theme=dracula"/>
 </div>
   
+  ##
+  
 <div style="display: inline_block"><br>
   <img align="center" alt="HTML" height="30" width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg">
   <img align="center" alt="CSS" height="30" width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg">
   <img align="center" alt="JS" height="30" width="40" src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg">
-  <img align="right" alt="Rafa-pic" height="150" style="border-radius:50px;" src="https://media3.giphy.com/media/qgQUggAC3Pfv687qPC/giphy.gif?cid=790b7611968ca6649491694955964377a6ac7691318b337c&rid=giphy.gif&ct=g">
+  <img align="right" alt="Rafa-pic" height="150" style="border-radius:50px;" src="https://img.lovepik.com/free-png/20210928/lovepik-programmer-png-image_401643778_wh1200.png">
 </div>
   
 ##
