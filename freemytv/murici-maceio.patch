@@ -1,9 +1,9 @@
 diff --git a/app/assets/glass/glass.css b/app/assets/glass/glass.css
 new file mode 100644
-index 0000000..c36417b
+index 0000000..7c9cc61
 --- /dev/null
 +++ b/app/assets/glass/glass.css
-@@ -0,0 +1,142 @@
+@@ -0,0 +1,143 @@
 +@font-face {
 +  font-family: "Inter";
 +  src: url("../fonts/InterVariable.ttf") format("truetype");
@@ -19,6 +19,7 @@ index 0000000..c36417b
 +}
 +
 +* { box-sizing: border-box; margin: 0; padding: 0; }
++*:focus { outline: none; }   /* the page draws its own focus; never the WebView's ring */
 +
 +html, body {
 +  width: 1920px;
@@ -148,10 +149,10 @@ index 0000000..c36417b
 +#toast.on { opacity: 1; transform: translate(-50%, 0); }
 diff --git a/app/assets/glass/glass.js b/app/assets/glass/glass.js
 new file mode 100644
-index 0000000..0a88fb5
+index 0000000..0db1982
 --- /dev/null
 +++ b/app/assets/glass/glass.js
-@@ -0,0 +1,569 @@
+@@ -0,0 +1,570 @@
 +/* The glass home screen: a sunset painted once, a frosted side menu, and the apps by category.
 + * Talks to the app through window.TV (GlassHome.Bridge): items(), open(id), weather(), refresh(). */
 +"use strict";
@@ -715,6 +716,7 @@ index 0000000..0a88fb5
 +}
 +
 +paintSky(document.getElementById("sky"));
++document.addEventListener("focusin", function (e) { if (e.target && e.target.blur) e.target.blur(); });
 +tick();
 +loadItems();
 +loadWeather();
@@ -723,7 +725,7 @@ index 0000000..0a88fb5
 +setInterval(function () { bridge.refresh(); }, 10 * 60000);
 diff --git a/app/assets/glass/index.html b/app/assets/glass/index.html
 new file mode 100644
-index 0000000..d8ced59
+index 0000000..eca471f
 --- /dev/null
 +++ b/app/assets/glass/index.html
 @@ -0,0 +1,37 @@
@@ -744,13 +746,13 @@ index 0000000..d8ced59
 +    <div id="date"></div>
 +  </div>
 +  <nav id="menu" class="glass">
-+    <button class="m f" data-sec="home"><img src="../symbols/home.png" alt="">Início</button>
-+    <button class="m f" data-sec="apps"><img src="../symbols/apps.png" alt="">Apps</button>
-+    <button class="m f" data-sec="movies"><img src="../symbols/play.png" alt="">Filmes e Séries</button>
-+    <button class="m f" data-sec="live"><img src="../symbols/live_tv.png" alt="">TV ao Vivo</button>
-+    <button class="m f" data-sec="games"><img src="../symbols/gamepad.png" alt="">Jogos</button>
-+    <button class="m f" data-sec="music"><img src="../symbols/speaker.png" alt="">Música</button>
-+    <button class="m f" data-sec="settings"><img src="../symbols/settings.png" alt="">Configurações</button>
++    <button tabindex="-1" class="m f" data-sec="home"><img src="../symbols/home.png" alt="">Início</button>
++    <button tabindex="-1" class="m f" data-sec="apps"><img src="../symbols/apps.png" alt="">Apps</button>
++    <button tabindex="-1" class="m f" data-sec="movies"><img src="../symbols/play.png" alt="">Filmes e Séries</button>
++    <button tabindex="-1" class="m f" data-sec="live"><img src="../symbols/live_tv.png" alt="">TV ao Vivo</button>
++    <button tabindex="-1" class="m f" data-sec="games"><img src="../symbols/gamepad.png" alt="">Jogos</button>
++    <button tabindex="-1" class="m f" data-sec="music"><img src="../symbols/speaker.png" alt="">Música</button>
++    <button tabindex="-1" class="m f" data-sec="settings"><img src="../symbols/settings.png" alt="">Configurações</button>
 +  </nav>
 +  <div id="hint"><b>OK</b> abrir &nbsp;·&nbsp; <span class="dot"></span> segure <b>OK</b> para favoritar</div>
 +</aside>
@@ -766,10 +768,10 @@ index 0000000..d8ced59
 +</html>
 diff --git a/app/src/io/freemytv/GlassHome.java b/app/src/io/freemytv/GlassHome.java
 new file mode 100644
-index 0000000..29e23f3
+index 0000000..1f88e82
 --- /dev/null
 +++ b/app/src/io/freemytv/GlassHome.java
-@@ -0,0 +1,246 @@
+@@ -0,0 +1,247 @@
 +package io.freemytv;
 +
 +import android.app.Activity;
@@ -826,11 +828,12 @@ index 0000000..29e23f3
 +            "com.spotify.tv.android", "com.google.android.youtube.tvmusic", "com.ilv.vradio", "deezer.android.tv",
 +            "com.amazon.music.tv", "com.aspiro.tidal", "com.soundcloud.android"));
 +    private static final Set<String> LIVE = new HashSet<>(Arrays.asList(
-+            "tv.pluto.android", "com.google.android.tv", "com.samsung.tvplus", "com.tcl.channelplus"));
++            "tv.pluto.android", "com.google.android.tv", "com.samsung.tvplus", "com.tcl.channelplus", "com.tcl.tv"));
 +    /** Never in the grids: this app itself and the TV's own home screens. */
 +    private static final Set<String> HIDDEN = new HashSet<>(Arrays.asList(
 +            "io.freemytv", "com.google.android.apps.tv.launcherx", "com.google.android.tvlauncher",
-+            "com.tcl.tv.tclhome_passive"));
++            "com.tcl.tv.tclhome_passive", "com.tcl.waterfall.overseas", "com.tcl.partnercustomizer", "com.tcl.suspension",
++            "com.tcl.guard", "com.tcl.dashboard"));
 +
 +    GlassHome(Activity a) {
 +        activity = a;
