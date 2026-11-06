@@ -1,315 +1,1018 @@
-diff --git a/app/src/io/freemytv/DreamView.java b/app/src/io/freemytv/DreamView.java
-index ac2b700..4a824c3 100644
---- a/app/src/io/freemytv/DreamView.java
-+++ b/app/src/io/freemytv/DreamView.java
-@@ -561,14 +561,21 @@ final class DreamView extends View implements Choreographer.FrameCallback, HomeD
-             float x = right;
-             HomeData.Weather wx = data.weather;
-             if (!Double.isNaN(wx.temp) && Prefs.weather()) {
--                String temp = HomeData.degrees(wx.temp);
--                float tw = cornerDate.measureText(temp);
--                c.drawText(temp, x - tw, DATE_BASE * k, cornerDate);
--                x -= tw + 10 * k;
--                String symbol = Symbols.weather(wx.code, wx.isDay);
--                float size = 30 * k, sw = Symbols.width(getContext(), symbol, size);
--                Symbols.draw(getContext(), c, symbol, x - sw / 2, DATE_BASE * k - Ui.halfCap(cornerDate), size, 0xEBFFFFFF);
--                x -= sw + 26 * k;
-+                // With a second city: "Maceió ☁ 28°   Murici ☀ 27°   date", each with its name.
-+                HomeData.Weather wx2 = data.weather2;
-+                boolean two = HomeData.hasSecond() && !Double.isNaN(wx2.temp);
-+                if (two) x = cornerCity(c, x, wx2, HomeData.secondCity());
-+                if (two) x = cornerCity(c, x, wx, Prefs.city().isEmpty() ? Ui.tr("Weather") : Prefs.city());
-+                else {
-+                    String temp = HomeData.degrees(wx.temp);
-+                    float tw = cornerDate.measureText(temp);
-+                    c.drawText(temp, x - tw, DATE_BASE * k, cornerDate);
-+                    x -= tw + 10 * k;
-+                    String symbol = Symbols.weather(wx.code, wx.isDay);
-+                    float size = 30 * k, sw = Symbols.width(getContext(), symbol, size);
-+                    Symbols.draw(getContext(), c, symbol, x - sw / 2, DATE_BASE * k - Ui.halfCap(cornerDate), size, 0xEBFFFFFF);
-+                    x -= sw + 26 * k;
-+                }
-             }
-             c.drawText(date, x - cornerDate.measureText(date), DATE_BASE * k, cornerDate);
- 
-@@ -612,6 +619,20 @@ final class DreamView extends View implements Choreographer.FrameCallback, HomeD
-         chromeDirty = false;
-     }
- 
-+    /** One city in the corner, right to left: its temperature, its symbol, its name; returns where the next one ends. */
-+    private float cornerCity(Canvas c, float x, HomeData.Weather wx, String name) {
-+        String temp = HomeData.degrees(wx.temp);
-+        float tw = cornerDate.measureText(temp);
-+        c.drawText(temp, x - tw, DATE_BASE * k, cornerDate);
-+        x -= tw + 10 * k;
-+        String symbol = Symbols.weather(wx.code, wx.isDay);
-+        float size = 30 * k, sw = Symbols.width(getContext(), symbol, size);
-+        Symbols.draw(getContext(), c, symbol, x - sw / 2, DATE_BASE * k - Ui.halfCap(cornerDate), size, 0xEBFFFFFF);
-+        x -= sw + 10 * k;
-+        c.drawText(name, x - cornerDate.measureText(name), DATE_BASE * k, cornerDate);
-+        return x - cornerDate.measureText(name) - 34 * k;
-+    }
+diff --git a/app/assets/glass/glass.css b/app/assets/glass/glass.css
+new file mode 100644
+index 0000000..c36417b
+--- /dev/null
++++ b/app/assets/glass/glass.css
+@@ -0,0 +1,142 @@
++@font-face {
++  font-family: "Inter";
++  src: url("../fonts/InterVariable.ttf") format("truetype");
++  font-weight: 100 900;
++}
 +
-     private void drawGlass(Canvas c, float alpha, float e) {
-         Glass g = glass;
-         if (g == null || glassShader == null || alpha <= 0.004f) return;
-diff --git a/app/src/io/freemytv/HomeData.java b/app/src/io/freemytv/HomeData.java
-index d1d693d..45a413f 100644
---- a/app/src/io/freemytv/HomeData.java
-+++ b/app/src/io/freemytv/HomeData.java
-@@ -58,6 +58,22 @@ final class HomeData {
-     private static String weatherUrl() {
-         return "https://api.open-meteo.com/v1/forecast?latitude=" + Prefs.latitude() + "&longitude=" + Prefs.longitude() + WEATHER_QUERY;
-     }
-+    /** The second city (config.properties: latitude2, longitude2, city2), shown next to the first one. */
-+    static boolean hasSecond() {
-+        return !Config.LATITUDE2.isEmpty() && !Config.LONGITUDE2.isEmpty();
-+    }
++:root {
++  --ink: #fff;
++  --dim: rgba(255, 255, 255, 0.72);
++  --faint: rgba(255, 255, 255, 0.5);
++  --line: rgba(255, 255, 255, 0.22);
++  --frost: none;   /* the blurred sky, set by glass.js */
++}
 +
-+    static String secondCity() {
-+        return Config.CITY2.trim().isEmpty() ? Ui.tr("Weather") : Config.CITY2.trim();
-+    }
++* { box-sizing: border-box; margin: 0; padding: 0; }
 +
-+    private static String secondPlace() {
-+        return Config.LATITUDE2 + "," + Config.LONGITUDE2;
-+    }
++html, body {
++  width: 1920px;
++  height: 1080px;
++  overflow: hidden;
++  background: #1b1036;
++  color: var(--ink);
++  font-family: "Inter", sans-serif;
++  -webkit-font-smoothing: antialiased;
++  cursor: none;
++  user-select: none;
++}
 +
-+    private static String secondUrl() {
-+        return "https://api.open-meteo.com/v1/forecast?latitude=" + Config.LATITUDE2 + "&longitude=" + Config.LONGITUDE2 + WEATHER_QUERY;
-+    }
-     private static final long PRICES_EVERY = 5 * 60_000L, WEATHER_EVERY = 30 * 60_000L;
-     interface Listener { void onData(); }
- 
-@@ -90,8 +106,10 @@ final class HomeData {
-     void settingsChanged() {
-         pricesAt = 0;
-         weatherAt = 0;
-+        weather2At = 0;
-         pricesFailedAt = 0;
-         weatherFailedAt = 0;
-+        weather2FailedAt = 0;
-     }
- 
-     static String coinName(int i) {
-@@ -161,15 +179,17 @@ final class HomeData {
-     final double[] prices = {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
-     /** 24 h change (%), in the same order. */
-     final double[] changes = {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
--    volatile long pricesAt, weatherAt;
-+    volatile long pricesAt, weatherAt, weather2At;
-     volatile Weather weather = new Weather();
-+    /** The second city's forecast (empty without one). */
-+    volatile Weather weather2 = new Weather();
- 
-     private final SharedPreferences cache;
-     private final ExecutorService io = Executors.newSingleThreadExecutor();
-     private final Handler main = new Handler(Looper.getMainLooper());
-     private final List<Listener> listeners = new ArrayList<>();
--    private volatile boolean fetchingPrices, fetchingWeather;
--    private volatile long pricesFailedAt, weatherFailedAt;
-+    private volatile boolean fetchingPrices, fetchingWeather, fetchingWeather2;
-+    private volatile long pricesFailedAt, weatherFailedAt, weather2FailedAt;
-     /** The city of the forecast in memory: another process (ScreensaverAlone) can see the city change under it. */
-     private volatile String weatherFor = "";
- 
-@@ -191,14 +211,22 @@ final class HomeData {
-                 weatherFor = weatherPlace();
-             }
-         } catch (Exception ignored) {}
-+        try {
-+            String w2 = cache.getString("weather2", null);
-+            if (hasSecond() && w2 != null && secondPlace().equals(cache.getString("weather2Place", ""))) {
-+                weather2 = parseWeather(w2);
-+                weather2At = cache.getLong("weather2At", 0);
++#sky { position: fixed; left: 0; top: 0; width: 1920px; height: 1080px; }
++
++/* Frosted glass: the same sky, blurred, fixed to the screen so it lines up with what's behind. */
++.glass {
++  background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.05)), var(--frost);
++  background-attachment: fixed, fixed;
++  background-size: 1920px 1080px, 1920px 1080px;
++  border: 1.5px solid var(--line);
++  box-shadow: 0 30px 80px rgba(10, 0, 30, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
++  border-radius: 36px;
++}
++
++/* MARK: - Left column: clock, menu, hints */
++
++#side { position: fixed; left: 84px; top: 70px; width: 400px; }
++
++#clock { padding-left: 8px; text-shadow: 0 4px 30px rgba(40, 0, 40, 0.45); }
++#time { font-size: 132px; font-weight: 250; letter-spacing: -4px; line-height: 1; }
++#date { font-size: 32px; font-weight: 450; color: var(--dim); margin-top: 10px; text-transform: lowercase; }
++#date::first-letter { text-transform: uppercase; }
++
++#menu { margin-top: 40px; padding: 18px; display: flex; flex-direction: column; gap: 4px; }
++
++.m {
++  display: flex; align-items: center; gap: 22px;
++  height: 72px; padding: 0 24px;
++  border: 0; border-radius: 22px;
++  background: transparent;
++  color: var(--dim);
++  font: 500 30px "Inter", sans-serif;
++  text-align: left;
++  transition: background 0.18s, color 0.18s, transform 0.18s;
++}
++.m img { width: 34px; height: 34px; opacity: 0.8; transition: filter 0.18s; }
++.m.current { background: rgba(255, 255, 255, 0.14); color: #fff; }
++.m.current img { opacity: 1; }
++.m.focused { background: #fff; color: #1d1230; transform: scale(1.04); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
++.m.focused img { opacity: 1; filter: brightness(0) saturate(100%) invert(9%) sepia(30%) saturate(2000%) hue-rotate(250deg); }
++
++#hint { margin-top: 34px; padding-left: 12px; font-size: 22px; color: var(--faint); line-height: 1.6; }
++#hint b { color: var(--dim); font-weight: 600; }
++#hint .dot { display: inline-block; width: 12px; height: 12px; border-radius: 6px; background: #ffc542; vertical-align: 1px; margin-right: 4px; }
++
++/* MARK: - Panel */
++
++#panel {
++  position: fixed; left: 540px; top: 250px; right: 84px; bottom: 70px;
++  padding: 44px 0 0 52px;
++  overflow: hidden;
++}
++#title { font-size: 46px; font-weight: 650; letter-spacing: -0.5px; margin-bottom: 28px; text-shadow: 0 2px 20px rgba(40, 0, 40, 0.35); }
++#content { position: absolute; left: 0; right: 0; top: 118px; bottom: 0; overflow: hidden; padding: 24px 52px 60px 52px; }
++#scroller { transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
++
++h2 { font-size: 28px; font-weight: 600; color: var(--dim); margin: 0 0 18px 6px; }
++
++.grid { display: flex; flex-wrap: wrap; gap: 34px 30px; margin-bottom: 36px; }
++
++/* App tile: the app's TV art, rounded, with its name below; focused, it grows and lights up. */
++.t { width: 236px; transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); }
++.t .art {
++  position: relative;
++  width: 236px; height: 133px;
++  border-radius: 22px;
++  overflow: hidden;
++  background: linear-gradient(150deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.06));
++  box-shadow: 0 12px 30px rgba(20, 0, 40, 0.35);
++  border: 1.5px solid rgba(255, 255, 255, 0.18);
++  transition: box-shadow 0.2s, border-color 0.2s;
++}
++.t .art img.banner { width: 100%; height: 100%; object-fit: cover; display: block; }
++.t .art img.sym { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; }
++.t .art .letter { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 56px; font-weight: 700; }
++.t .name { margin-top: 14px; text-align: center; font-size: 23px; font-weight: 500; color: var(--dim);
++  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
++.t.off { opacity: 0.45; }
++.t .star { position: absolute; right: 10px; top: 10px; width: 16px; height: 16px; border-radius: 8px; background: #ffc542;
++  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.25); }
++.t.focused { transform: scale(1.1) translateY(-6px); z-index: 2; }
++.t.focused .art { border-color: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.95), 0 24px 50px rgba(20, 0, 40, 0.55); }
++.t.focused .name { color: #fff; font-weight: 600; }
++.t.holding .art { box-shadow: 0 0 0 6px #ffc542, 0 24px 50px rgba(20, 0, 40, 0.55); }
++
++/* MARK: - Weather (home) */
++
++.wx-row { display: flex; gap: 30px; margin-bottom: 26px; }
++.wx {
++  flex: 1;
++  padding: 24px 34px 22px;
++  border-radius: 28px;
++  background: linear-gradient(150deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
++  border: 1.5px solid rgba(255, 255, 255, 0.16);
++}
++.wx .city { font-size: 26px; font-weight: 600; color: var(--dim); }
++.wx .now { display: flex; align-items: center; gap: 20px; margin-top: 8px; }
++.wx .now img { width: 74px; height: 74px; }
++.wx .temp { font-size: 72px; font-weight: 300; letter-spacing: -2px; }
++.wx .cond { font-size: 26px; font-weight: 500; }
++.wx .hl { font-size: 22px; color: var(--faint); margin-top: 6px; }
++.wx .hours { display: flex; justify-content: space-between; margin-top: 14px; padding-top: 14px; border-top: 1.5px solid rgba(255, 255, 255, 0.14); }
++.wx .h { text-align: center; font-size: 20px; color: var(--faint); }
++.wx .h img { display: block; width: 28px; height: 28px; margin: 6px auto; }
++.wx .h b { font-size: 22px; color: #fff; font-weight: 550; }
++.wx .sun { margin-top: 10px; font-size: 20px; color: var(--faint); }
++
++.empty { font-size: 26px; color: var(--faint); padding: 10px 6px; }
++
++#toast {
++  position: fixed; left: 50%; bottom: 40px; transform: translate(-50%, 30px);
++  padding: 16px 30px; border-radius: 40px;
++  background: rgba(20, 10, 40, 0.75); border: 1.5px solid var(--line);
++  font-size: 24px; opacity: 0; transition: opacity 0.25s, transform 0.25s;
++}
++#toast.on { opacity: 1; transform: translate(-50%, 0); }
+diff --git a/app/assets/glass/glass.js b/app/assets/glass/glass.js
+new file mode 100644
+index 0000000..0a88fb5
+--- /dev/null
++++ b/app/assets/glass/glass.js
+@@ -0,0 +1,569 @@
++/* The glass home screen: a sunset painted once, a frosted side menu, and the apps by category.
++ * Talks to the app through window.TV (GlassHome.Bridge): items(), open(id), weather(), refresh(). */
++"use strict";
++
++var W = 1920, H = 1080;
++var bridge = window.TV || mockBridge();
++
++// MARK: - The sky
++
++function rng(seed) {
++  return function () {
++    seed = (seed * 1664525 + 1013904223) >>> 0;
++    return seed / 4294967296;
++  };
++}
++
++/** A ridge line across the screen (midpoint displacement), as y values every `step` px. */
++function ridge(r, base, rough, step) {
++  var n = Math.ceil(W / step) + 1, ys = new Array(n);
++  ys[0] = base + (r() - 0.5) * rough;
++  ys[n - 1] = base + (r() - 0.5) * rough;
++  (function split(a, b, amp) {
++    if (b - a < 2) return;
++    var m = (a + b) >> 1;
++    ys[m] = (ys[a] + ys[b]) / 2 + (r() - 0.5) * amp;
++    split(a, m, amp * 0.55);
++    split(m, b, amp * 0.55);
++  })(0, n - 1, rough * 2);
++  return ys;
++}
++
++function fillRidge(c, ys, step, bottom, color) {
++  c.beginPath();
++  c.moveTo(0, bottom);
++  for (var i = 0; i < ys.length; i++) c.lineTo(i * step, ys[i]);
++  c.lineTo(W, bottom);
++  c.closePath();
++  c.fillStyle = color;
++  c.fill();
++}
++
++function pine(c, x, base, h, color) {
++  c.fillStyle = color;
++  c.fillRect(x - h * 0.02, base - h * 0.15, h * 0.04, h * 0.15);
++  for (var i = 0; i < 6; i++) {
++    var y = base - h * 0.12 - i * h * 0.15, w = h * (0.32 - i * 0.045);
++    c.beginPath();
++    c.moveTo(x - w, y);
++    c.lineTo(x, y - h * 0.26);
++    c.lineTo(x + w, y);
++    c.closePath();
++    c.fill();
++  }
++}
++
++function paintSky(canvas) {
++  canvas.width = W;
++  canvas.height = H;
++  var c = canvas.getContext("2d"), r = rng(20261106);
++  var horizon = H * 0.64;
++
++  // Sky: night blue at the top, through violet and magenta, to the orange glow at the horizon.
++  var g = c.createLinearGradient(0, 0, 0, horizon);
++  g.addColorStop(0, "#120a2e");
++  g.addColorStop(0.28, "#33195a");
++  g.addColorStop(0.55, "#7d2a73");
++  g.addColorStop(0.78, "#d9506a");
++  g.addColorStop(0.92, "#f58b4c");
++  g.addColorStop(1, "#ffc46b");
++  c.fillStyle = g;
++  c.fillRect(0, 0, W, horizon + 2);
++
++  // Stars, fading out toward the glow.
++  for (var i = 0; i < 260; i++) {
++    var sy = r() * horizon * 0.55, a = (1 - sy / (horizon * 0.55)) * (0.35 + r() * 0.65);
++    c.fillStyle = "rgba(255,255,255," + a.toFixed(2) + ")";
++    var s = r() < 0.08 ? 2.4 : 1.3;
++    c.fillRect(r() * W, sy, s, s);
++  }
++
++  // A big ringed planet, low in the sky on the right.
++  var px = W * 0.7, py = H * 0.2, pr = 150;
++  var pg = c.createRadialGradient(px - pr * 0.45, py - pr * 0.5, pr * 0.1, px, py, pr);
++  pg.addColorStop(0, "#ffd9b0");
++  pg.addColorStop(0.45, "#e0866e");
++  pg.addColorStop(0.8, "#7a3263");
++  pg.addColorStop(1, "#3a1846");
++  c.save();
++  c.translate(px, py);
++  c.rotate(-0.32);
++  c.strokeStyle = "rgba(255,214,190,0.35)";
++  c.lineWidth = 10;
++  c.beginPath();
++  c.ellipse(0, 0, pr * 1.9, pr * 0.42, 0, Math.PI, 2 * Math.PI);   // the far half of the ring, behind the planet
++  c.stroke();
++  c.restore();
++  c.fillStyle = pg;
++  c.beginPath();
++  c.arc(px, py, pr, 0, 2 * Math.PI);
++  c.fill();
++  c.save();
++  c.beginPath();
++  c.arc(px, py, pr, 0, 2 * Math.PI);
++  c.clip();
++  c.translate(px, py);
++  c.rotate(-0.32);   // the bands follow the ring's tilt
++  c.filter = "blur(6px)";
++  c.globalAlpha = 0.16;
++  for (var b = -4; b <= 4; b++) {   // soft bands
++    c.fillStyle = b % 2 ? "#fff1dd" : "#6b2260";
++    c.fillRect(-pr * 1.2, b * pr * 0.22 - pr * 0.05, pr * 2.4, pr * 0.1);
++  }
++  c.restore();
++  c.save();
++  c.translate(px, py);
++  c.rotate(-0.32);
++  c.strokeStyle = "rgba(255,226,205,0.6)";
++  c.lineWidth = 9;
++  c.beginPath();
++  c.ellipse(0, 0, pr * 1.9, pr * 0.42, 0, 0, Math.PI);   // the near half, in front
++  c.stroke();
++  c.strokeStyle = "rgba(255,226,205,0.22)";
++  c.lineWidth = 22;
++  c.beginPath();
++  c.ellipse(0, 0, pr * 1.62, pr * 0.34, 0, 0, Math.PI);
++  c.stroke();
++  c.restore();
++  // A small moon on the left.
++  var mg = c.createRadialGradient(W * 0.37 - 14, H * 0.13 - 14, 4, W * 0.37, H * 0.13, 46);
++  mg.addColorStop(0, "#fde6d2");
++  mg.addColorStop(1, "#8a4a74");
++  c.fillStyle = mg;
++  c.beginPath();
++  c.arc(W * 0.37, H * 0.13, 46, 0, 2 * Math.PI);
++  c.fill();
++
++  // The sun setting on the left, with its glow.
++  var sx = W * 0.3, sunY = horizon - 18;
++  var glow = c.createRadialGradient(sx, sunY, 10, sx, sunY, 620);
++  glow.addColorStop(0, "rgba(255,226,160,0.95)");
++  glow.addColorStop(0.12, "rgba(255,170,90,0.6)");
++  glow.addColorStop(0.45, "rgba(240,90,90,0.18)");
++  glow.addColorStop(1, "rgba(240,90,90,0)");
++  c.fillStyle = glow;
++  c.fillRect(0, 0, W, horizon);
++  c.fillStyle = "#fff4d6";
++  c.beginPath();
++  c.arc(sx, sunY, 70, 0, 2 * Math.PI);
++  c.fill();
++
++  // Clouds: soft streaks lit from below.
++  c.save();
++  c.filter = "blur(14px)";
++  for (var k = 0; k < 16; k++) {
++    var cy = H * (0.3 + r() * 0.28), cx = r() * W, cw = 180 + r() * 380;
++    var near = (cy - H * 0.3) / (H * 0.28);
++    c.fillStyle = "rgba(" + (255) + "," + Math.round(140 + near * 60) + "," + Math.round(150 - near * 40) + "," + (0.18 + r() * 0.2).toFixed(2) + ")";
++    c.beginPath();
++    c.ellipse(cx, cy, cw, 10 + r() * 18, 0, 0, 2 * Math.PI);
++    c.fill();
++  }
++  c.restore();
++
++  // Mountains: three ranges, hazy in the distance, dark up close.
++  var far = ridge(r, horizon - 120, 110, 16), mid = ridge(r, horizon - 50, 90, 12), near2 = ridge(r, horizon - 6, 40, 10);
++  fillRidge(c, far, 16, horizon + 2, "#7b3a78");
++  c.fillStyle = "rgba(255,150,120,0.16)";
++  c.fillRect(0, horizon - 200, W, 200);
++  fillRidge(c, mid, 12, horizon + 2, "#4a1f55");
++  fillRidge(c, near2, 10, horizon + 2, "#25112f");
++
++  // The lake: the sky mirrored, darker, with the sun's path on the water.
++  c.save();
++  c.translate(0, horizon * 2);
++  c.scale(1, -1);
++  c.globalAlpha = 0.55;
++  c.drawImage(canvas, 0, 0, W, horizon, 0, 0, W, horizon);
++  c.restore();
++  var water = c.createLinearGradient(0, horizon, 0, H);
++  water.addColorStop(0, "rgba(40,12,50,0.35)");
++  water.addColorStop(1, "rgba(14,6,30,0.92)");
++  c.fillStyle = water;
++  c.fillRect(0, horizon, W, H - horizon);
++  for (var l = 0; l < 90; l++) {
++    var ly = horizon + 6 + Math.pow(r(), 1.6) * (H - horizon - 10);
++    var spread = 40 + (ly - horizon) * 0.55, lw = 20 + r() * spread;
++    var lx = sx + (r() - 0.5) * spread * 1.4;
++    c.fillStyle = "rgba(255,200,140," + (0.5 * (1 - (ly - horizon) / (H - horizon))).toFixed(2) + ")";
++    c.fillRect(lx - lw / 2, ly, lw, 2 + r() * 2);
++  }
++  c.fillStyle = "rgba(255,255,255,0.05)";
++  for (var q = 0; q < 140; q++) c.fillRect(r() * W, horizon + r() * (H - horizon), 30 + r() * 90, 1.5);
++
++  // Pines on both shores.
++  for (var p = 0; p < 9; p++) pine(c, W - 30 - p * 52 - r() * 30, horizon + 30 + r() * 30, 230 + r() * 180, "#0d0616");
++  for (var p2 = 0; p2 < 4; p2++) pine(c, 20 + p2 * 46 + r() * 20, horizon + 20 + r() * 20, 150 + r() * 110, "#0d0616");
++
++  // Vignette.
++  var v = c.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, H * 1.05);
++  v.addColorStop(0, "rgba(0,0,0,0)");
++  v.addColorStop(1, "rgba(8,0,20,0.55)");
++  c.fillStyle = v;
++  c.fillRect(0, 0, W, H);
++
++  // The frost: the same picture, blurred, behind the glass panels.
++  var f = document.createElement("canvas");
++  f.width = W / 4;
++  f.height = H / 4;
++  var fc = f.getContext("2d");
++  fc.filter = "blur(9px) saturate(1.2)";
++  fc.drawImage(canvas, -20, -20, W / 4 + 40, H / 4 + 40);
++  document.documentElement.style.setProperty("--frost", "url(" + f.toDataURL("image/jpeg", 0.85) + ")");
++}
++
++// MARK: - Clock
++
++var WEEKDAYS = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
++var MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
++
++function tick() {
++  var d = new Date();
++  var hh = String(d.getHours()).padStart(2, "0"), mm = String(d.getMinutes()).padStart(2, "0");
++  document.getElementById("time").textContent = hh + ":" + mm;
++  document.getElementById("date").textContent = WEEKDAYS[d.getDay()] + ", " + d.getDate() + " de " + MONTHS[d.getMonth()];
++  setTimeout(tick, 60000 - (d.getSeconds() * 1000 + d.getMilliseconds()) + 50);
++}
++
++// MARK: - Data
++
++var items = [], weather = {};
++var SECTIONS = {
++  home: "Início", apps: "Apps", movies: "Filmes e Séries", live: "TV ao Vivo",
++  games: "Jogos", music: "Música", settings: "Configurações"
++};
++var DEFAULT_FAVS = ["org.smarttube.stable", "com.google.android.youtube.tv", "com.stremio.one", "com.world.youcinetv",
++  "com.netflix.ninja", "com.globo.globotv", "com.spotify.tv.android", "com.amazon.amazonvideo.livingroom", "com.disney.disneyplus"];
++
++function load(key, fallback) {
++  try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; }
++}
++function save(key, v) {
++  try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {}
++}
++
++var favs = load("favs", null);
++
++function loadItems() {
++  try { items = JSON.parse(bridge.items()); } catch (e) { items = []; }
++  if (!favs) {
++    favs = [];
++    DEFAULT_FAVS.forEach(function (p) { if (items.some(function (it) { return it.pkg === p; })) favs.push(p); });
++    save("favs", favs);
++  }
++}
++
++function loadWeather() {
++  try { weather = JSON.parse(bridge.weather()); } catch (e) { weather = {}; }
++}
++
++function isFav(it) { return it.pkg && favs.indexOf(it.pkg) >= 0; }
++
++function itemsFor(sec) {
++  if (sec === "apps") return items.filter(function (it) { return it.kind === "app"; })
++    .sort(function (a, b) { return a.label.localeCompare(b.label, "pt"); });
++  if (sec === "home") return favs.map(function (p) { return items.filter(function (it) { return it.pkg === p; })[0]; })
++    .filter(Boolean);
++  return items.filter(function (it) { return it.cat === sec; });
++}
++
++// MARK: - Drawing
++
++function el(tag, cls, text) {
++  var e = document.createElement(tag);
++  if (cls) e.className = cls;
++  if (text != null) e.textContent = text;
++  return e;
++}
++
++function tile(it) {
++  var t = el("div", "t f" + (it.connected === false ? " off" : ""));
++  t.dataset.id = it.id;
++  var art = el("div", "art");
++  if (it.kind === "app") {
++    var img = el("img", "banner");
++    img.src = "https://tv.local/icon/" + encodeURIComponent(it.id);
++    img.onerror = function () { img.remove(); art.appendChild(el("div", "letter", it.label.charAt(0))); };
++    art.appendChild(img);
++    if (isFav(it)) art.appendChild(el("div", "star"));
++  } else {
++    var s = el("img", "sym");
++    s.src = "../symbols/" + it.symbol + ".png";
++    art.appendChild(s);
++  }
++  t.appendChild(art);
++  t.appendChild(el("div", "name", it.label));
++  return t;
++}
++
++function weatherCard(w) {
++  var card = el("div", "wx");
++  card.appendChild(el("div", "city", w.city));
++  if (!w.ok) {
++    card.appendChild(el("div", "hl", "Sem dados do clima agora."));
++    return card;
++  }
++  var now = el("div", "now"), icon = el("img");
++  icon.src = "../symbols/" + w.icon + ".png";
++  now.appendChild(icon);
++  now.appendChild(el("div", "temp", w.temp));
++  var right = el("div");
++  right.appendChild(el("div", "cond", w.cond));
++  right.appendChild(el("div", "hl", "Máx. " + w.max + "   Mín. " + w.min));
++  now.appendChild(right);
++  card.appendChild(now);
++  var hours = el("div", "hours");
++  (w.hours || []).forEach(function (h) {
++    var e = el("div", "h");
++    e.appendChild(document.createTextNode(h.t));
++    var i = el("img");
++    i.src = "../symbols/" + h.icon + ".png";
++    e.appendChild(i);
++    e.appendChild(el("b", null, h.temp));
++    hours.appendChild(e);
++  });
++  card.appendChild(hours);
++  if (w.sunrise) card.appendChild(el("div", "sun", "Nascer do sol " + w.sunrise + "   ·   Pôr do sol " + w.sunset));
++  return card;
++}
++
++var section = "home";
++
++function render(sec) {
++  section = sec;
++  document.getElementById("title").textContent = sec === "home" ? greeting() : SECTIONS[sec];
++  var menu = document.querySelectorAll(".m");
++  for (var i = 0; i < menu.length; i++) menu[i].classList.toggle("current", menu[i].dataset.sec === sec);
++  var content = document.getElementById("content");
++  content.innerHTML = "";
++  var scroller = el("div");
++  scroller.id = "scroller";
++  content.appendChild(scroller);
++  shift = 0;
++  if (sec === "home") {
++    var row = el("div", "wx-row");
++    if (weather.main) row.appendChild(weatherCard(weather.main));
++    if (weather.second) row.appendChild(weatherCard(weather.second));
++    if (row.children.length) scroller.appendChild(row);
++    scroller.appendChild(el("h2", null, "Favoritos"));
++  }
++  var list = itemsFor(sec), grid = el("div", "grid");
++  list.forEach(function (it) { grid.appendChild(tile(it)); });
++  if (list.length) scroller.appendChild(grid);
++  else scroller.appendChild(el("div", "empty", sec === "home"
++    ? "Nenhum favorito ainda: em Apps, segure OK num app para favoritar."
++    : "Nada aqui por enquanto."));
++}
++
++function greeting() {
++  var h = new Date().getHours();
++  return h < 5 ? "Boa noite" : h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
++}
++
++// MARK: - Focus and the remote
++
++var zone = "menu", menuIndex = 0, focused = null;
++
++function menuButtons() { return Array.prototype.slice.call(document.querySelectorAll(".m")); }
++function tiles() { return Array.prototype.slice.call(document.querySelectorAll("#content .t")); }
++
++function setFocus(e) {
++  if (focused) focused.classList.remove("focused");
++  focused = e;
++  if (e) e.classList.add("focused");
++  if (e && zone === "content") keepVisible(e);
++}
++
++var shift = 0;
++
++/** Scrolls the panel so the focused tile (and its name) shows; back at the top whenever that fits. */
++function keepVisible(e) {
++  var scroller = document.getElementById("scroller"), content = document.getElementById("content");
++  var view = content.clientHeight - 40;
++  var top = e.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 24;   // unaffected by the scroll
++  var bottom = top + e.offsetHeight + 60;
++  if (bottom <= view) shift = 0;
++  else if (bottom - shift > view) shift = bottom - view;
++  else if (top - shift < 0) shift = top;
++  scroller.style.transform = "translateY(" + (-shift) + "px)";
++}
++
++function focusMenu(i) {
++  var b = menuButtons();
++  zone = "menu";
++  menuIndex = Math.max(0, Math.min(b.length - 1, i));
++  setFocus(b[menuIndex]);
++  if (b[menuIndex].dataset.sec !== section) render(b[menuIndex].dataset.sec);
++}
++
++function focusContent() {
++  var t = tiles();
++  if (!t.length) return;
++  zone = "content";
++  setFocus(t[0]);
++}
++
++/** The nearest tile in a direction, by screen position. */
++function nearest(from, dx, dy) {
++  var a = from.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2, best = null, bestScore = 1e9;
++  tiles().forEach(function (t) {
++    if (t === from) return;
++    var b = t.getBoundingClientRect(), bx = b.left + b.width / 2, by = b.top + b.height / 2;
++    var px = (bx - ax) * dx, py = (by - ay) * dy;
++    if (dx && px <= 4) return;
++    if (dy && py <= 4) return;
++    var along = dx ? px : py, across = dx ? Math.abs(by - ay) : Math.abs(bx - ax);
++    var score = along + across * (dy ? 0.6 : 3);
++    if (score < bestScore) { bestScore = score; best = t; }
++  });
++  return best;
++}
++
++function move(dx, dy) {
++  if (zone === "menu") {
++    if (dy) focusMenu(menuIndex + dy);
++    else if (dx > 0) focusContent();
++    return;
++  }
++  var next = nearest(focused, dx, dy);
++  if (next) setFocus(next);
++  else if (dx < 0) focusMenu(menuIndex);
++}
++
++var holdTimer = null, held = false;
++
++function okDown(e) {
++  if (e.repeat || holdTimer) return;
++  held = false;
++  if (zone !== "content" || !focused) return;
++  var it = byId(focused.dataset.id);
++  if (!it || !it.pkg) return;
++  focused.classList.add("holding");
++  holdTimer = setTimeout(function () {
++    held = true;
++    toggleFav(it);
++  }, 650);
++}
++
++function okUp() {
++  clearTimeout(holdTimer);
++  holdTimer = null;
++  if (focused) focused.classList.remove("holding");
++  if (held) { held = false; return; }
++  if (zone === "menu") { focusContent(); return; }
++  if (focused) bridge.open(focused.dataset.id);
++}
++
++function byId(id) { return items.filter(function (it) { return it.id === id; })[0]; }
++
++function toggleFav(it) {
++  var i = favs.indexOf(it.pkg);
++  if (i >= 0) favs.splice(i, 1);
++  else favs.push(it.pkg);
++  save("favs", favs);
++  toast(i >= 0 ? it.label + " saiu dos favoritos" : it.label + " está nos favoritos");
++  var id = focused && focused.dataset.id;
++  render(section);
++  zone = "content";
++  var again = tiles().filter(function (t) { return t.dataset.id === id; })[0] || tiles()[0];
++  if (again) setFocus(again); else focusMenu(menuIndex);
++}
++
++var toastTimer;
++function toast(text) {
++  var t = document.getElementById("toast");
++  t.textContent = text;
++  t.classList.add("on");
++  clearTimeout(toastTimer);
++  toastTimer = setTimeout(function () { t.classList.remove("on"); }, 2200);
++}
++
++document.addEventListener("keydown", function (e) {
++  switch (e.key) {
++    case "ArrowUp": move(0, -1); break;
++    case "ArrowDown": move(0, 1); break;
++    case "ArrowLeft": move(-1, 0); break;
++    case "ArrowRight": move(1, 0); break;
++    case "Enter": okDown(e); break;
++    default: return;
++  }
++  e.preventDefault();
++});
++document.addEventListener("keyup", function (e) {
++  if (e.key === "Enter") { okUp(); e.preventDefault(); }
++});
++
++// MARK: - From the app
++
++window.onBack = function () {
++  if (zone === "content") focusMenu(menuIndex);
++  else if (section !== "home") focusMenu(0);
++};
++
++window.reset = function () {
++  focusMenu(0);
++  render("home");
++};
++
++window.onWeather = function () {
++  loadWeather();
++  if (section === "home") {
++    var id = focused && focused.dataset.id, z = zone;
++    render("home");
++    if (z === "content") {
++      zone = "content";
++      setFocus(tiles().filter(function (t) { return t.dataset.id === id; })[0] || tiles()[0]);
++    } else setFocus(menuButtons()[menuIndex]);
++  }
++};
++
++window.onResume = function () {
++  loadItems();
++  loadWeather();
++  var id = focused && focused.dataset.id, z = zone;
++  render(section);
++  if (z === "content" && id) {
++    zone = "content";
++    var t = tiles().filter(function (x) { return x.dataset.id === id; })[0];
++    if (t) { setFocus(t); return; }
++  }
++  focusMenu(menuIndex);
++};
++
++// MARK: - Start
++
++function mockBridge() {   // a browser without the TV: sample data
++  var apps = [["org.smarttube.stable", "SmartTube", "movies"], ["com.stremio.one", "Stremio", "movies"],
++    ["com.world.youcinetv", "YouCine", "movies"], ["com.google.android.youtube.tv", "YouTube", "movies"],
++    ["com.spotify.tv.android", "Spotify", "music"], ["com.ilv.vradio", "Rádio", "music"],
++    ["nextapp.fx", "FX", "other"], ["com.android.vending", "Play Store", "other"], ["com.substack.app", "Substack", "other"]];
++  return {
++    items: function () {
++      var out = apps.map(function (a) { return { id: "app-" + a[0], kind: "app", label: a[1], pkg: a[0], cat: a[2] }; });
++      out.push({ id: "in-0", kind: "live", label: "TV ao Vivo", symbol: "tv", cat: "live", connected: true });
++      out.push({ id: "in-1", kind: "input", label: "HDMI 1", symbol: "hdmi", cat: "live", connected: false });
++      out.push({ id: "in-2", kind: "input", label: "HDMI 3", symbol: "hdmi", cat: "live", connected: true });
++      out.push({ id: "set-home", kind: "setting", label: "Ajustes do Free My TV", symbol: "sparkles", cat: "settings" });
++      out.push({ id: "set-tv", kind: "setting", label: "Ajustes da TV", symbol: "tv_settings", cat: "settings" });
++      return JSON.stringify(out);
++    },
++    open: function (id) { toast("abrir " + id); },
++    weather: function () {
++      var hours = [["01h", "22°", "clear_night"], ["02h", "22°", "clear_night"], ["03h", "21°", "partly_cloudy_night"],
++        ["04h", "21°", "cloud"], ["05h", "22°", "partly_cloudy_day"], ["06h", "24°", "sunny"]].map(function (h) { return { t: h[0], temp: h[1], icon: h[2] }; });
++      return JSON.stringify({
++        main: { ok: true, city: "Murici", temp: "24°", cond: "Poucas nuvens", icon: "partly_cloudy_night", max: "34°", min: "22°", hours: hours, sunrise: "04:53", sunset: "17:21" },
++        second: { ok: true, city: "Maceió", temp: "26°", cond: "Poucas nuvens", icon: "partly_cloudy_night", max: "30°", min: "24°", hours: hours, sunrise: "04:50", sunset: "17:18" }
++      });
++    },
++    refresh: function () {}
++  };
++}
++
++paintSky(document.getElementById("sky"));
++tick();
++loadItems();
++loadWeather();
++render("home");
++focusMenu(0);
++setInterval(function () { bridge.refresh(); }, 10 * 60000);
+diff --git a/app/assets/glass/index.html b/app/assets/glass/index.html
+new file mode 100644
+index 0000000..d8ced59
+--- /dev/null
++++ b/app/assets/glass/index.html
+@@ -0,0 +1,37 @@
++<!doctype html>
++<html lang="pt-BR">
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=1920, user-scalable=no">
++<title>Início</title>
++<link rel="stylesheet" href="glass.css">
++</head>
++<body>
++<canvas id="sky"></canvas>
++
++<aside id="side">
++  <div id="clock">
++    <div id="time">--:--</div>
++    <div id="date"></div>
++  </div>
++  <nav id="menu" class="glass">
++    <button class="m f" data-sec="home"><img src="../symbols/home.png" alt="">Início</button>
++    <button class="m f" data-sec="apps"><img src="../symbols/apps.png" alt="">Apps</button>
++    <button class="m f" data-sec="movies"><img src="../symbols/play.png" alt="">Filmes e Séries</button>
++    <button class="m f" data-sec="live"><img src="../symbols/live_tv.png" alt="">TV ao Vivo</button>
++    <button class="m f" data-sec="games"><img src="../symbols/gamepad.png" alt="">Jogos</button>
++    <button class="m f" data-sec="music"><img src="../symbols/speaker.png" alt="">Música</button>
++    <button class="m f" data-sec="settings"><img src="../symbols/settings.png" alt="">Configurações</button>
++  </nav>
++  <div id="hint"><b>OK</b> abrir &nbsp;·&nbsp; <span class="dot"></span> segure <b>OK</b> para favoritar</div>
++</aside>
++
++<main id="panel" class="glass">
++  <h1 id="title">Início</h1>
++  <div id="content"></div>
++</main>
++
++<div id="toast"></div>
++<script src="glass.js"></script>
++</body>
++</html>
+diff --git a/app/src/io/freemytv/GlassHome.java b/app/src/io/freemytv/GlassHome.java
+new file mode 100644
+index 0000000..29e23f3
+--- /dev/null
++++ b/app/src/io/freemytv/GlassHome.java
+@@ -0,0 +1,246 @@
++package io.freemytv;
++
++import android.app.Activity;
++import android.content.Context;
++import android.content.pm.ApplicationInfo;
++import android.content.pm.PackageManager;
++import android.graphics.Bitmap;
++import android.net.Uri;
++import android.os.Build;
++import android.view.KeyEvent;
++import android.view.View;
++import android.webkit.JavascriptInterface;
++import android.webkit.WebResourceRequest;
++import android.webkit.WebResourceResponse;
++import android.webkit.WebSettings;
++import android.webkit.WebView;
++import android.webkit.WebViewClient;
++
++import org.json.JSONArray;
++import org.json.JSONObject;
++
++import java.io.ByteArrayInputStream;
++import java.io.ByteArrayOutputStream;
++import java.util.Arrays;
++import java.util.HashMap;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++import java.util.concurrent.ConcurrentHashMap;
++
++/**
++ * The "glass" home screen (config.properties: home_style=glass): a web page in assets/glass drawn by the TV's WebView,
++ * over a sunset it paints itself, with a frosted side menu and the apps by category. Everything it opens goes through
++ * HomeApps, as on the regular home screen, and the weather comes from HomeData (both cities).
++ */
++final class GlassHome {
++    private final Activity activity;
++    private final WebView web;
++    private final HomeData data;
++    private final Map<String, HomeApps.Item> items = new ConcurrentHashMap<>();
++    private final Map<String, byte[]> icons = new ConcurrentHashMap<>();
++    private final HomeData.Listener onData = this::weatherChanged;
++    private boolean loaded;
++
++    /** Packages by category, beyond what the apps say of themselves (ApplicationInfo.category). */
++    private static final Set<String> MOVIES = new HashSet<>(Arrays.asList(
++            "com.netflix.ninja", "com.amazon.amazonvideo.livingroom", "com.disney.disneyplus", "com.wbd.stream",
++            "com.hbo.hbonow", "com.globo.globotv", "com.apple.atve.androidtv.appletv", "com.cbs.ott", "com.stremio.one",
++            "com.world.youcinetv", "com.google.android.youtube.tv", "org.smarttube.stable", "org.smarttube.beta",
++            "com.google.android.videos", "com.crunchyroll.crunchyroid", "com.plexapp.android", "org.jellyfin.androidtv",
++            "org.xbmc.kodi", "com.mubi", "br.com.telecine.android", "com.claro.claroflex", "com.netflix.mediaclient"));
++    private static final Set<String> MUSIC = new HashSet<>(Arrays.asList(
++            "com.spotify.tv.android", "com.google.android.youtube.tvmusic", "com.ilv.vradio", "deezer.android.tv",
++            "com.amazon.music.tv", "com.aspiro.tidal", "com.soundcloud.android"));
++    private static final Set<String> LIVE = new HashSet<>(Arrays.asList(
++            "tv.pluto.android", "com.google.android.tv", "com.samsung.tvplus", "com.tcl.channelplus"));
++    /** Never in the grids: this app itself and the TV's own home screens. */
++    private static final Set<String> HIDDEN = new HashSet<>(Arrays.asList(
++            "io.freemytv", "com.google.android.apps.tv.launcherx", "com.google.android.tvlauncher",
++            "com.tcl.tv.tclhome_passive"));
++
++    GlassHome(Activity a) {
++        activity = a;
++        data = HomeData.get(a);
++        web = new WebView(a);
++        WebSettings s = web.getSettings();
++        s.setJavaScriptEnabled(true);
++        s.setDomStorageEnabled(true);   // the favorites
++        s.setAllowFileAccess(true);
++        s.setMediaPlaybackRequiresUserGesture(true);
++        s.setTextZoom(100);
++        s.setMinimumFontSize(1);
++        // The page is laid out at 1920 x 1080 (its viewport) and scaled to the screen, whatever the TV's density.
++        s.setUseWideViewPort(true);
++        s.setLoadWithOverviewMode(true);
++        web.setBackgroundColor(0xFF1B1036);
++        web.setVerticalScrollBarEnabled(false);
++        web.setHorizontalScrollBarEnabled(false);
++        web.setFocusable(true);
++        web.setFocusableInTouchMode(true);
++        web.addJavascriptInterface(new Bridge(), "TV");
++        web.setWebViewClient(new WebViewClient() {
++            @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
++                Uri u = req.getUrl();
++                if (!"tv.local".equals(u.getHost()) || u.getPath() == null || !u.getPath().startsWith("/icon/")) return null;
++                byte[] png = icon(u.getLastPathSegment());
++                if (png == null) return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", null, null);
++                return new WebResourceResponse("image/png", null, new ByteArrayInputStream(png));
 +            }
-+        } catch (Exception ignored) {}
-         // As for the picks: a fetch made before the Wi-Fi is up (the TV just started) is tried again when it comes.
-         try {
-             ConnectivityManager cm = c.getSystemService(ConnectivityManager.class);
-             if (cm != null) cm.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
-                 @Override public void onAvailable(Network network) {
--                    if (pricesFailedAt == 0 && weatherFailedAt == 0) return;
-+                    if (pricesFailedAt == 0 && weatherFailedAt == 0 && weather2FailedAt == 0) return;
-                     pricesFailedAt = 0;
-                     weatherFailedAt = 0;
-+                    weather2FailedAt = 0;
-                     main.postDelayed(HomeData.this::refreshIfStale, 2000);
-                 }
-             });
-@@ -267,6 +295,28 @@ final class HomeData {
-                 }
-             });
-         }
-+        refreshSecond(now);
-+    }
 +
-+    /** The second city: the same forecast, fetched on its own so one city failing doesn't hold back the other. */
-+    private void refreshSecond(long now) {
-+        if (!hasSecond() || !Prefs.weather() || fetchingWeather2) return;
-+        if (!(now - weather2At > WEATHER_EVERY || now < weather2At) || failedRecently(weather2FailedAt, now)) return;
-+        fetchingWeather2 = true;
-+        io.execute(() -> {
-+            try {
-+                String body = get(secondUrl());
-+                weather2 = parseWeather(body);
-+                weather2At = System.currentTimeMillis();
-+                cache.edit().putString("weather2", body).putLong("weather2At", weather2At).putString("weather2Place", secondPlace()).apply();
-+                notifyListeners();
-+            } catch (Exception e) {
-+                weather2FailedAt = System.currentTimeMillis();
-+                AppLog.w("weather2: " + e.getMessage());
-+            } finally {
-+                fetchingWeather2 = false;
++            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
++                return true;   // the page never goes anywhere else
++            }
++
++            @Override public void onPageFinished(WebView view, String url) {
++                loaded = true;
++                web.requestFocus();
 +            }
 +        });
-     }
- 
-     private static boolean failedRecently(long at, long now) {
-diff --git a/app/src/io/freemytv/HomeView.java b/app/src/io/freemytv/HomeView.java
-index de6dc60..3c0ee81 100644
---- a/app/src/io/freemytv/HomeView.java
-+++ b/app/src/io/freemytv/HomeView.java
-@@ -323,7 +323,9 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
-     private static final long BURST_MS = 1500;
-     private int w, h;
-     private float k = 1;
--    private String clockText = "", dateText = "", weatherLine = "";
-+    private String clockText = "", dateText = "", weatherLine = "", weatherLine2 = "";
-+    private long weatherLine2At = -1;
-+    private boolean weatherLineTwo;
-     /** "Off in 42 min" next to the round buttons while the sleep timer runs (Settings > Sleep Timer); "" otherwise. */
-     private String sleepText = "";
-     private long weatherLineAt = -1;
-@@ -2222,6 +2224,20 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
-         float x = r.left + 34 * k;
-         c.drawText(weatherTitle, x, r.top + 54 * k, cardTitle);
-         HomeData.Weather wx = textWeather;
-+        HomeData.Weather wx2 = data.weather2;
-+        if (HomeData.hasSecond() && !Double.isNaN(wx2.temp)) {
-+            // The second city in the title row, right-aligned: "Maceió  ☁ 28°".
-+            String t2 = HomeData.degrees(wx2.temp), name2 = HomeData.secondCity();
-+            float rx = r.right - 34 * k, base2 = r.top + 54 * k;
-+            float tw = cardTitle.measureText(t2);
-+            c.drawText(t2, rx - tw, base2, cardTitle);
-+            rx -= tw + 10 * k;
-+            String s2 = Symbols.weather(wx2.code, wx2.isDay);
-+            float sw2 = Symbols.width(getContext(), s2, 28 * k);
-+            Symbols.draw(getContext(), c, s2, rx - sw2 / 2, base2 - Ui.halfCap(cardTitle), 28 * k, drawerInk(0.9f));
-+            rx -= sw2 + 12 * k;
-+            c.drawText(name2, rx - cardTitle.measureText(name2), base2, cardTitle);
-+        }
-         if (Double.isNaN(wx.temp)) {
-             c.drawText(Ui.tr("No weather data right now."), x, r.top + 120 * k, cardDim);
-             return;
-@@ -2318,7 +2334,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
-      * sunrise and sunset, "12 min ago").
-      */
-     private String drawerCardsKey() {
--        return data.weatherAt + "|" + data.pricesAt + "|" + Prefs.version + "|" + Ui.language + "|"
-+        return data.weatherAt + "|" + data.weather2At + "|" + data.pricesAt + "|" + Prefs.version + "|" + Ui.language + "|"
-                 + Float.floatToIntBits(dark()) + "|" + System.currentTimeMillis() / 60_000;
-     }
- 
-@@ -3919,6 +3935,11 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
-         StringBuilder s = new StringBuilder(Prefs.city().isEmpty() ? Ui.tr("Weather") : Prefs.city());
-         HomeData.Weather wx = data.weather;
-         if (Double.isNaN(wx.temp)) return s.append(". ").append(Ui.tr("No weather data right now.")).toString();
-+        HomeData.Weather wx2 = data.weather2;
-+        if (HomeData.hasSecond() && !Double.isNaN(wx2.temp)) {
-+            s.append(". ").append(HomeData.secondCity()).append(": ").append(HomeData.degrees(wx2.temp)).append(", ")
-+                    .append(HomeData.condition(wx2.code, wx2.isDay)).append(". ").append(Prefs.city());
-+        }
-         s.append(". ").append(HomeData.degrees(wx.temp)).append(", ").append(HomeData.condition(wx.code, wx.isDay)).append(". ")
-                 .append(Ui.trf("High {max}, low {min}.", "max", HomeData.degrees(wx.max), "min", HomeData.degrees(wx.min)));
-         if (Prefs.forecast().equals("days") && !wx.days.isEmpty()) {   // as the card: the hours until there are days
-@@ -4653,20 +4674,42 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
-         float x = MARGIN * k;
-         c.drawText(dateText, x - Ui.leftBearing(lDate, dateText), L_DATE_BASE * k, lDate);
-         c.drawText(clockText, x - Ui.leftBearing(lClock, clockText), L_CLOCK_BASE * k, lClock);
--        HomeData.Weather wx = data.weather;
-+        HomeData.Weather wx = data.weather, wx2 = data.weather2;
-         if (!Prefs.weather() || Double.isNaN(wx.temp)) return;
--        if (data.weatherAt != weatherLineAt || Prefs.version != weatherLinePrefs || !Ui.language.equals(weatherLineLanguage)) {
-+        // With a second city (config.properties: city2), both side by side, each with its name: "Murici 27° Sunny".
-+        boolean two = HomeData.hasSecond() && !Double.isNaN(wx2.temp);
-+        if (data.weatherAt != weatherLineAt || data.weather2At != weatherLine2At || two != weatherLineTwo
-+                || Prefs.version != weatherLinePrefs || !Ui.language.equals(weatherLineLanguage)) {
-             weatherLineAt = data.weatherAt;
-+            weatherLine2At = data.weather2At;
-+            weatherLineTwo = two;
-             weatherLinePrefs = Prefs.version;
-             weatherLineLanguage = Ui.language;
--            weatherLine = HomeData.degrees(wx.temp) + "  " + HomeData.condition(wx.code, wx.isDay) + "   "
--                    + HomeData.highLow(wx, "  ");
-+            if (two) {
-+                String first = Prefs.city().isEmpty() ? Ui.tr("Weather") : Prefs.city();
-+                weatherLine = first + "  " + HomeData.degrees(wx.temp) + "  " + HomeData.condition(wx.code, wx.isDay);
-+                weatherLine2 = HomeData.secondCity() + "  " + HomeData.degrees(wx2.temp) + "  " + HomeData.condition(wx2.code, wx2.isDay);
-+            } else {
-+                weatherLine = HomeData.degrees(wx.temp) + "  " + HomeData.condition(wx.code, wx.isDay) + "   "
-+                        + HomeData.highLow(wx, "  ");
++        web.loadUrl("file:///android_asset/glass/index.html");
++        data.addListener(onData);
++    }
++
++    View view() { return web; }
++
++    void resume() {
++        web.onResume();
++        web.requestFocus();
++        data.refreshIfStale();
++        js("window.onResume && onResume()");
++    }
++
++    void pause() { web.onPause(); }
++
++    /** Home pressed on the home screen: back to the start. */
++    void reset() { js("window.reset && reset()"); }
++
++    void destroy() {
++        data.removeListener(onData);
++        web.destroy();
++    }
++
++    /** Back stays on the home screen: the page decides (closes a section, goes back to the menu). */
++    boolean onKey(KeyEvent e) {
++        if (e.getKeyCode() != KeyEvent.KEYCODE_BACK) return false;
++        if (e.getAction() == KeyEvent.ACTION_UP) js("window.onBack && onBack()");
++        return true;
++    }
++
++    private void weatherChanged() { js("window.onWeather && onWeather()"); }
++
++    private void js(String code) {
++        if (loaded) web.evaluateJavascript(code, null);
++    }
++
++    private byte[] icon(String id) {
++        byte[] cached = icons.get(id);
++        if (cached != null) return cached;
++        HomeApps.Item it = items.get(id);
++        if (it == null || it.pkg == null) return null;
++        Bitmap b = HomeApps.tileFor(activity, it.pkg);
++        if (b == null) return null;
++        ByteArrayOutputStream out = new ByteArrayOutputStream();
++        b.compress(Bitmap.CompressFormat.PNG, 100, out);
++        byte[] png = out.toByteArray();
++        icons.put(id, png);
++        return png;
++    }
++
++    private static String category(Context c, String pkg) {
++        if (MUSIC.contains(pkg)) return "music";
++        if (LIVE.contains(pkg)) return "live";
++        if (MOVIES.contains(pkg)) return "movies";
++        try {
++            ApplicationInfo ai = c.getPackageManager().getApplicationInfo(pkg, 0);
++            if (Build.VERSION.SDK_INT >= 26) {
++                if (ai.category == ApplicationInfo.CATEGORY_GAME) return "games";
++                if (ai.category == ApplicationInfo.CATEGORY_AUDIO) return "music";
++                if (ai.category == ApplicationInfo.CATEGORY_VIDEO) return "movies";
 +            }
-         }
-         float size = 40 * k, base = L_WEATHER_BASE * k;
-         String symbol = Symbols.weather(wx.code, wx.isDay);
-         float sw = Symbols.width(getContext(), symbol, size);
-         Symbols.draw(getContext(), c, symbol, x + sw / 2, base - Ui.halfCap(lWeather), size, lWeather.getColor());
-         c.drawText(weatherLine, x + sw + 16 * k, base, lWeather);
-+        if (!two) return;
-+        float x2 = x + sw + 16 * k + lWeather.measureText(weatherLine) + 34 * k;
-+        fill.setShader(null);
-+        fill.setColor(Ui.alpha(lWeather.getColor(), 0.35f));
-+        float cap = Ui.cap(lWeather);
-+        c.drawRoundRect(x2, base - cap - 2 * k, x2 + 2 * k, base + 2 * k, k, k, fill);   // a thin divider between the cities
-+        x2 += 2 * k + 34 * k;
-+        String symbol2 = Symbols.weather(wx2.code, wx2.isDay);
-+        float sw2 = Symbols.width(getContext(), symbol2, size);
-+        Symbols.draw(getContext(), c, symbol2, x2 + sw2 / 2, base - Ui.halfCap(lWeather), size, lWeather.getColor());
-+        c.drawText(weatherLine2, x2 + sw2 + 16 * k, base, lWeather);
-     }
- 
-     /**
-diff --git a/build.sh b/build.sh
-index e68f00e..9fc728f 100755
---- a/build.sh
-+++ b/build.sh
-@@ -49,11 +49,13 @@ number() {
-   printf '%s' "$v"
- }
- if $GENERIC; then
--  LAT=""; LON=""; REGION=""; CURRENCY=""
-+  LAT=""; LON=""; REGION=""; CURRENCY=""; LAT2=""; LON2=""
- else
-   LAT="$(number latitude 40.7128)"
-   LON="$(number longitude -74.0060)"
-   REGION="$(prop tmdb_region US)"
-+  LAT2="$(prop latitude2 '')"; LON2="$(prop longitude2 '')"
-+  if [ -n "$LAT2$LON2" ]; then LAT2="$(number latitude2 0)"; LON2="$(number longitude2 0)"; fi
-   CURRENCY="$(prop currency USD)"
- fi
- ASSIST=false; [ "$(prop disable_assistant false)" = "true" ] && ASSIST=true
-@@ -124,6 +126,9 @@ final class Config {
-     static final String LATITUDE = "$LAT";
-     static final String LONGITUDE = "$LON";
-     static final String CITY = "$(prop city '')";
-+    static final String LATITUDE2 = "$LAT2";
-+    static final String LONGITUDE2 = "$LON2";
-+    static final String CITY2 = "$(prop city2 '')";
-     static final String LANGUAGE = "$(prop language auto)";
-     static final String CURRENCY = "$CURRENCY";
-     static final String TEMPERATURE = "$(prop temperature auto)";
-diff --git a/config.example.properties b/config.example.properties
-index 3758fe1..62ef006 100644
---- a/config.example.properties
-+++ b/config.example.properties
-@@ -12,6 +12,10 @@ latitude=40.7128
- longitude=-74.0060
- # Optional: the name shown on the weather card (empty = "Weather").
- city=
-+# Optional: a second city whose weather shows next to the first one (decimal degrees and its name).
-+latitude2=
-+longitude2=
-+city2=
- 
- # true leaves cartoons and anime (TMDB's Animation genre) out of the picks. Home Settings changes it on the TV
- # ("Cartoons and anime").
++            if ((ai.flags & ApplicationInfo.FLAG_IS_GAME) != 0) return "games";
++        } catch (PackageManager.NameNotFoundException ignored) {
++        }
++        return "other";
++    }
++
++    private static JSONObject wx(HomeData.Weather w, String city) throws Exception {
++        JSONObject o = new JSONObject().put("city", city);
++        if (Double.isNaN(w.temp)) return o.put("ok", false);
++        o.put("ok", true).put("temp", HomeData.degrees(w.temp)).put("cond", HomeData.condition(w.code, w.isDay))
++                .put("icon", Symbols.weather(w.code, w.isDay))
++                .put("max", HomeData.degrees(w.max)).put("min", HomeData.degrees(w.min));
++        JSONArray hours = new JSONArray();
++        for (int i = 0; i < w.hours.size() && i < 6; i++) {
++            hours.put(new JSONObject().put("t", HomeData.hour(w.hours.get(i))).put("temp", HomeData.degrees(w.hourTemp.get(i)))
++                    .put("icon", Symbols.weather(w.hourCode.get(i), w.hourDay.get(i))));
++        }
++        o.put("hours", hours);
++        if (w.sunrise != 0) o.put("sunrise", Ui.time(w.sunrise));
++        if (w.sunset != 0) o.put("sunset", Ui.time(w.sunset));
++        return o;
++    }
++
++    private final class Bridge {
++        /** Everything the page can show: apps (with their category), live TV and inputs, settings. */
++        @JavascriptInterface public String items() {
++            JSONArray out = new JSONArray();
++            try {
++                Map<String, HomeApps.Item> next = new HashMap<>();
++                for (String[] app : HomeApps.launchable(activity)) {
++                    String pkg = app[0];
++                    if (HIDDEN.contains(pkg) || HomeApps.isHidden(pkg)) continue;
++                    String id = "app-" + pkg;
++                    next.put(id, HomeApps.app(pkg, app[1]));
++                    out.put(new JSONObject().put("id", id).put("kind", "app").put("label", app[1]).put("pkg", pkg)
++                            .put("cat", category(activity, pkg)));
++                }
++                int n = 0;
++                for (HomeApps.Item it : HomeApps.allInputs(activity)) {
++                    String id = "in-" + (n++);
++                    next.put(id, it);
++                    out.put(new JSONObject().put("id", id).put("kind", it.kind == HomeApps.LIVE_TV ? "live" : "input")
++                            .put("label", it.label).put("symbol", it.symbol == null ? "hdmi" : it.symbol)
++                            .put("connected", it.connected).put("cat", "live"));
++                }
++                HomeApps.Item home = HomeApps.settings(), tv = HomeApps.tvSettings();
++                next.put("set-home", home);
++                next.put("set-tv", tv);
++                out.put(new JSONObject().put("id", "set-home").put("kind", "setting").put("label", "Ajustes do Free My TV")
++                        .put("symbol", "sparkles").put("cat", "settings"));
++                out.put(new JSONObject().put("id", "set-tv").put("kind", "setting").put("label", "Ajustes da TV")
++                        .put("symbol", "tv_settings").put("cat", "settings"));
++                items.clear();
++                items.putAll(next);
++            } catch (Exception e) {
++                AppLog.w("glass: items: " + e.getMessage());
++            }
++            return out.toString();
++        }
++
++        @JavascriptInterface public void open(String id) {
++            HomeApps.Item it = items.get(id);
++            if (it == null) return;
++            activity.runOnUiThread(() -> {
++                if (!HomeApps.open(activity, it, null)) AppLog.w("glass: couldn't open " + id);
++            });
++        }
++
++        /** Both cities' weather (the second only with city2 in config.properties). */
++        @JavascriptInterface public String weather() {
++            try {
++                JSONObject o = new JSONObject();
++                o.put("main", wx(data.weather, Prefs.city().isEmpty() ? "Clima" : Prefs.city()));
++                if (HomeData.hasSecond()) o.put("second", wx(data.weather2, HomeData.secondCity()));
++                return o.toString();
++            } catch (Exception e) {
++                return "{}";
++            }
++        }
++
++        @JavascriptInterface public void refresh() {
++            activity.runOnUiThread(data::refreshIfStale);
++        }
++    }
++}
