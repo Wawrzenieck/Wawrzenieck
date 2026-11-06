@@ -1,6 +1,6 @@
 diff --git a/app/assets/glass/glass.css b/app/assets/glass/glass.css
 new file mode 100644
-index 0000000..7c9cc61
+index 0000000..5f71689
 --- /dev/null
 +++ b/app/assets/glass/glass.css
 @@ -0,0 +1,143 @@
@@ -85,7 +85,7 @@ index 0000000..7c9cc61
 +}
 +#title { font-size: 46px; font-weight: 650; letter-spacing: -0.5px; margin-bottom: 28px; text-shadow: 0 2px 20px rgba(40, 0, 40, 0.35); }
 +#content { position: absolute; left: 0; right: 0; top: 118px; bottom: 0; overflow: hidden; padding: 24px 52px 60px 52px; }
-+#scroller { transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
++#scroller { position: relative; transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
 +
 +h2 { font-size: 28px; font-weight: 600; color: var(--dim); margin: 0 0 18px 6px; }
 +
@@ -149,10 +149,10 @@ index 0000000..7c9cc61
 +#toast.on { opacity: 1; transform: translate(-50%, 0); }
 diff --git a/app/assets/glass/glass.js b/app/assets/glass/glass.js
 new file mode 100644
-index 0000000..0db1982
+index 0000000..dd0bce1
 --- /dev/null
 +++ b/app/assets/glass/glass.js
-@@ -0,0 +1,570 @@
+@@ -0,0 +1,576 @@
 +/* The glass home screen: a sunset painted once, a frosted side menu, and the apps by category.
 + * Talks to the app through window.TV (GlassHome.Bridge): items(), open(id), weather(), refresh(). */
 +"use strict";
@@ -535,11 +535,10 @@ index 0000000..0db1982
 +function keepVisible(e) {
 +  var scroller = document.getElementById("scroller"), content = document.getElementById("content");
 +  var view = content.clientHeight - 40;
-+  var top = e.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 24;   // unaffected by the scroll
++  var top = spot(e).y - e.offsetHeight / 2 - 24;   // in the layout: unaffected by the scroll and the focus effect
 +  var bottom = top + e.offsetHeight + 60;
-+  if (bottom <= view) shift = 0;
-+  else if (bottom - shift > view) shift = bottom - view;
-+  else if (top - shift < 0) shift = top;
++  shift = Math.max(0, bottom - view);   // as little scroll as it takes: back at the top whenever the tile fits
++  if (top - shift < 0) shift = top;
 +  scroller.style.transform = "translateY(" + (-shift) + "px)";
 +}
 +
@@ -558,17 +557,24 @@ index 0000000..0db1982
 +  setFocus(t[0]);
 +}
 +
-+/** The nearest tile in a direction, by screen position. */
++/** Where a tile sits in the layout (its center), unaffected by the focus effect's scale and lift. */
++function spot(t) {
++  var x = t.offsetWidth / 2, y = t.offsetHeight / 2, n = t, root = document.getElementById("scroller");
++  while (n && n !== root) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
++  return { x: x, y: y, w: t.offsetWidth, h: t.offsetHeight };
++}
++
++/** The nearest tile in a direction: the next row (or column) over, then the closest one in it. */
 +function nearest(from, dx, dy) {
-+  var a = from.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2, best = null, bestScore = 1e9;
++  var a = spot(from), ax = a.x, ay = a.y, best = null, bestScore = 1e9;
 +  tiles().forEach(function (t) {
 +    if (t === from) return;
-+    var b = t.getBoundingClientRect(), bx = b.left + b.width / 2, by = b.top + b.height / 2;
++    var b = spot(t), bx = b.x, by = b.y;
 +    var px = (bx - ax) * dx, py = (by - ay) * dy;
-+    if (dx && px <= 4) return;
-+    if (dy && py <= 4) return;
++    if (dx && (px <= a.w / 2 || Math.abs(by - ay) > a.h / 2)) return;   // left/right: only in the same row
++    if (dy && py <= a.h / 2) return;                                     // up/down: only another row
 +    var along = dx ? px : py, across = dx ? Math.abs(by - ay) : Math.abs(bx - ax);
-+    var score = along + across * (dy ? 0.6 : 3);
++    var score = along * 4 + across;   // the nearest row first, then the closest column in it
 +    if (score < bestScore) { bestScore = score; best = t; }
 +  });
 +  return best;
@@ -766,12 +772,67 @@ index 0000000..eca471f
 +<script src="glass.js"></script>
 +</body>
 +</html>
+diff --git a/app/src/io/freemytv/DreamView.java b/app/src/io/freemytv/DreamView.java
+index ac2b700..4a824c3 100644
+--- a/app/src/io/freemytv/DreamView.java
++++ b/app/src/io/freemytv/DreamView.java
+@@ -561,14 +561,21 @@ final class DreamView extends View implements Choreographer.FrameCallback, HomeD
+             float x = right;
+             HomeData.Weather wx = data.weather;
+             if (!Double.isNaN(wx.temp) && Prefs.weather()) {
+-                String temp = HomeData.degrees(wx.temp);
+-                float tw = cornerDate.measureText(temp);
+-                c.drawText(temp, x - tw, DATE_BASE * k, cornerDate);
+-                x -= tw + 10 * k;
+-                String symbol = Symbols.weather(wx.code, wx.isDay);
+-                float size = 30 * k, sw = Symbols.width(getContext(), symbol, size);
+-                Symbols.draw(getContext(), c, symbol, x - sw / 2, DATE_BASE * k - Ui.halfCap(cornerDate), size, 0xEBFFFFFF);
+-                x -= sw + 26 * k;
++                // With a second city: "Maceió ☁ 28°   Murici ☀ 27°   date", each with its name.
++                HomeData.Weather wx2 = data.weather2;
++                boolean two = HomeData.hasSecond() && !Double.isNaN(wx2.temp);
++                if (two) x = cornerCity(c, x, wx2, HomeData.secondCity());
++                if (two) x = cornerCity(c, x, wx, Prefs.city().isEmpty() ? Ui.tr("Weather") : Prefs.city());
++                else {
++                    String temp = HomeData.degrees(wx.temp);
++                    float tw = cornerDate.measureText(temp);
++                    c.drawText(temp, x - tw, DATE_BASE * k, cornerDate);
++                    x -= tw + 10 * k;
++                    String symbol = Symbols.weather(wx.code, wx.isDay);
++                    float size = 30 * k, sw = Symbols.width(getContext(), symbol, size);
++                    Symbols.draw(getContext(), c, symbol, x - sw / 2, DATE_BASE * k - Ui.halfCap(cornerDate), size, 0xEBFFFFFF);
++                    x -= sw + 26 * k;
++                }
+             }
+             c.drawText(date, x - cornerDate.measureText(date), DATE_BASE * k, cornerDate);
+ 
+@@ -612,6 +619,20 @@ final class DreamView extends View implements Choreographer.FrameCallback, HomeD
+         chromeDirty = false;
+     }
+ 
++    /** One city in the corner, right to left: its temperature, its symbol, its name; returns where the next one ends. */
++    private float cornerCity(Canvas c, float x, HomeData.Weather wx, String name) {
++        String temp = HomeData.degrees(wx.temp);
++        float tw = cornerDate.measureText(temp);
++        c.drawText(temp, x - tw, DATE_BASE * k, cornerDate);
++        x -= tw + 10 * k;
++        String symbol = Symbols.weather(wx.code, wx.isDay);
++        float size = 30 * k, sw = Symbols.width(getContext(), symbol, size);
++        Symbols.draw(getContext(), c, symbol, x - sw / 2, DATE_BASE * k - Ui.halfCap(cornerDate), size, 0xEBFFFFFF);
++        x -= sw + 10 * k;
++        c.drawText(name, x - cornerDate.measureText(name), DATE_BASE * k, cornerDate);
++        return x - cornerDate.measureText(name) - 34 * k;
++    }
++
+     private void drawGlass(Canvas c, float alpha, float e) {
+         Glass g = glass;
+         if (g == null || glassShader == null || alpha <= 0.004f) return;
 diff --git a/app/src/io/freemytv/GlassHome.java b/app/src/io/freemytv/GlassHome.java
 new file mode 100644
-index 0000000..1f88e82
+index 0000000..deae766
 --- /dev/null
 +++ b/app/src/io/freemytv/GlassHome.java
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,253 @@
 +package io.freemytv;
 +
 +import android.app.Activity;
@@ -855,6 +916,12 @@ index 0000000..1f88e82
 +        web.setFocusable(true);
 +        web.setFocusableInTouchMode(true);
 +        web.addJavascriptInterface(new Bridge(), "TV");
++        web.setWebChromeClient(new android.webkit.WebChromeClient() {
++            @Override public boolean onConsoleMessage(android.webkit.ConsoleMessage m) {
++                if (m.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) AppLog.w("glass js: " + m.message());
++                return true;
++            }
++        });
 +        web.setWebViewClient(new WebViewClient() {
 +            @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
 +                Uri u = req.getUrl();
@@ -1019,3 +1086,360 @@ index 0000000..1f88e82
 +        }
 +    }
 +}
+diff --git a/app/src/io/freemytv/HomeActivity.java b/app/src/io/freemytv/HomeActivity.java
+index e1d3ecc..d3cc95a 100644
+--- a/app/src/io/freemytv/HomeActivity.java
++++ b/app/src/io/freemytv/HomeActivity.java
+@@ -20,6 +20,7 @@ public class HomeActivity extends Activity {
+     /** Opens All Apps (a remote's All Apps button, RemoteKeys). */
+     static final String EXTRA_ALL_APPS = "io.freemytv.ALL_APPS";
+     private HomeView home;
++    private GlassHome glass;   // home_style=glass: the web home screen instead of HomeView
+     private int prefsVersion = Prefs.version;   // settings changed while we were away: start over
+ 
+     @Override protected void onCreate(Bundle savedInstanceState) {
+@@ -40,6 +41,11 @@ public class HomeActivity extends Activity {
+             return;
+         }
+         Ui.init(this);
++        if (Config.GLASS) {
++            glass = new GlassHome(this);
++            setContentView(glass.view());
++            return;
++        }
+         home = new HomeView(this);
+         setContentView(home);
+         getWindow().setBackgroundDrawable(null);
+@@ -74,18 +80,24 @@ public class HomeActivity extends Activity {
+             return;
+         }
+         if (home != null) home.resume();
++        if (glass != null) glass.resume();
+         Updates.tellOnce(this);   // an update the week's check got ready: said once
+     }
+ 
+     @Override protected void onPause() {
+         resumed = false;
+         if (home != null) home.pause();
++        if (glass != null) glass.pause();
+         super.onPause();
+     }
+ 
+     /** Home button pressed on the home screen: back to the entry state (focus on the first app, sheet closed). */
+     @Override protected void onNewIntent(Intent intent) {
+         super.onNewIntent(intent);
++        if (glass != null) {
++            glass.reset();
++            return;
++        }
+         if (home == null) return;
+         if (intent.getBooleanExtra(EXTRA_ALL_APPS, false)) {
+             home.showAllApps();
+@@ -103,6 +115,7 @@ public class HomeActivity extends Activity {
+     private static final long TWICE_MS = 700;
+ 
+     @Override protected void onDestroy() {
++        if (glass != null) glass.destroy();
+         if (home != null) {
+             home.removeCallbacks(powerOnLive);
+             home.destroy();
+@@ -119,6 +132,7 @@ public class HomeActivity extends Activity {
+         keyPressed = true;
+         if (RemoteKeys.onKey(this, event)) return true;
+         if (home != null && home.onKey(event)) return true;
++        if (glass != null && glass.onKey(event)) return true;
+         return super.dispatchKeyEvent(event);
+     }
+ 
+diff --git a/app/src/io/freemytv/HomeApps.java b/app/src/io/freemytv/HomeApps.java
+index e165976..d371564 100644
+--- a/app/src/io/freemytv/HomeApps.java
++++ b/app/src/io/freemytv/HomeApps.java
+@@ -1148,6 +1148,15 @@ final class HomeApps {
+ 
+     // MARK: - Cards
+ 
++    /** An app's 16:9 TV art (or its icon on a dark card), for the glass home screen. */
++    static Bitmap tileFor(Context c, String pkg) {
++        try {
++            return appTile(c, null, pkg, 0);
++        } catch (RuntimeException e) {
++            return null;
++        }
++    }
++
+     private static synchronized Bitmap appTile(Context c, String key, String pkg, int brand) {
+         String cacheKey = key != null ? key : pkg;
+         if (TILES.containsKey(cacheKey)) return TILES.get(cacheKey);
+diff --git a/app/src/io/freemytv/HomeData.java b/app/src/io/freemytv/HomeData.java
+index d1d693d..45a413f 100644
+--- a/app/src/io/freemytv/HomeData.java
++++ b/app/src/io/freemytv/HomeData.java
+@@ -58,6 +58,22 @@ final class HomeData {
+     private static String weatherUrl() {
+         return "https://api.open-meteo.com/v1/forecast?latitude=" + Prefs.latitude() + "&longitude=" + Prefs.longitude() + WEATHER_QUERY;
+     }
++    /** The second city (config.properties: latitude2, longitude2, city2), shown next to the first one. */
++    static boolean hasSecond() {
++        return !Config.LATITUDE2.isEmpty() && !Config.LONGITUDE2.isEmpty();
++    }
++
++    static String secondCity() {
++        return Config.CITY2.trim().isEmpty() ? Ui.tr("Weather") : Config.CITY2.trim();
++    }
++
++    private static String secondPlace() {
++        return Config.LATITUDE2 + "," + Config.LONGITUDE2;
++    }
++
++    private static String secondUrl() {
++        return "https://api.open-meteo.com/v1/forecast?latitude=" + Config.LATITUDE2 + "&longitude=" + Config.LONGITUDE2 + WEATHER_QUERY;
++    }
+     private static final long PRICES_EVERY = 5 * 60_000L, WEATHER_EVERY = 30 * 60_000L;
+     interface Listener { void onData(); }
+ 
+@@ -90,8 +106,10 @@ final class HomeData {
+     void settingsChanged() {
+         pricesAt = 0;
+         weatherAt = 0;
++        weather2At = 0;
+         pricesFailedAt = 0;
+         weatherFailedAt = 0;
++        weather2FailedAt = 0;
+     }
+ 
+     static String coinName(int i) {
+@@ -161,15 +179,17 @@ final class HomeData {
+     final double[] prices = {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+     /** 24 h change (%), in the same order. */
+     final double[] changes = {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+-    volatile long pricesAt, weatherAt;
++    volatile long pricesAt, weatherAt, weather2At;
+     volatile Weather weather = new Weather();
++    /** The second city's forecast (empty without one). */
++    volatile Weather weather2 = new Weather();
+ 
+     private final SharedPreferences cache;
+     private final ExecutorService io = Executors.newSingleThreadExecutor();
+     private final Handler main = new Handler(Looper.getMainLooper());
+     private final List<Listener> listeners = new ArrayList<>();
+-    private volatile boolean fetchingPrices, fetchingWeather;
+-    private volatile long pricesFailedAt, weatherFailedAt;
++    private volatile boolean fetchingPrices, fetchingWeather, fetchingWeather2;
++    private volatile long pricesFailedAt, weatherFailedAt, weather2FailedAt;
+     /** The city of the forecast in memory: another process (ScreensaverAlone) can see the city change under it. */
+     private volatile String weatherFor = "";
+ 
+@@ -191,14 +211,22 @@ final class HomeData {
+                 weatherFor = weatherPlace();
+             }
+         } catch (Exception ignored) {}
++        try {
++            String w2 = cache.getString("weather2", null);
++            if (hasSecond() && w2 != null && secondPlace().equals(cache.getString("weather2Place", ""))) {
++                weather2 = parseWeather(w2);
++                weather2At = cache.getLong("weather2At", 0);
++            }
++        } catch (Exception ignored) {}
+         // As for the picks: a fetch made before the Wi-Fi is up (the TV just started) is tried again when it comes.
+         try {
+             ConnectivityManager cm = c.getSystemService(ConnectivityManager.class);
+             if (cm != null) cm.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
+                 @Override public void onAvailable(Network network) {
+-                    if (pricesFailedAt == 0 && weatherFailedAt == 0) return;
++                    if (pricesFailedAt == 0 && weatherFailedAt == 0 && weather2FailedAt == 0) return;
+                     pricesFailedAt = 0;
+                     weatherFailedAt = 0;
++                    weather2FailedAt = 0;
+                     main.postDelayed(HomeData.this::refreshIfStale, 2000);
+                 }
+             });
+@@ -267,6 +295,28 @@ final class HomeData {
+                 }
+             });
+         }
++        refreshSecond(now);
++    }
++
++    /** The second city: the same forecast, fetched on its own so one city failing doesn't hold back the other. */
++    private void refreshSecond(long now) {
++        if (!hasSecond() || !Prefs.weather() || fetchingWeather2) return;
++        if (!(now - weather2At > WEATHER_EVERY || now < weather2At) || failedRecently(weather2FailedAt, now)) return;
++        fetchingWeather2 = true;
++        io.execute(() -> {
++            try {
++                String body = get(secondUrl());
++                weather2 = parseWeather(body);
++                weather2At = System.currentTimeMillis();
++                cache.edit().putString("weather2", body).putLong("weather2At", weather2At).putString("weather2Place", secondPlace()).apply();
++                notifyListeners();
++            } catch (Exception e) {
++                weather2FailedAt = System.currentTimeMillis();
++                AppLog.w("weather2: " + e.getMessage());
++            } finally {
++                fetchingWeather2 = false;
++            }
++        });
+     }
+ 
+     private static boolean failedRecently(long at, long now) {
+diff --git a/app/src/io/freemytv/HomeView.java b/app/src/io/freemytv/HomeView.java
+index de6dc60..3c0ee81 100644
+--- a/app/src/io/freemytv/HomeView.java
++++ b/app/src/io/freemytv/HomeView.java
+@@ -323,7 +323,9 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
+     private static final long BURST_MS = 1500;
+     private int w, h;
+     private float k = 1;
+-    private String clockText = "", dateText = "", weatherLine = "";
++    private String clockText = "", dateText = "", weatherLine = "", weatherLine2 = "";
++    private long weatherLine2At = -1;
++    private boolean weatherLineTwo;
+     /** "Off in 42 min" next to the round buttons while the sleep timer runs (Settings > Sleep Timer); "" otherwise. */
+     private String sleepText = "";
+     private long weatherLineAt = -1;
+@@ -2222,6 +2224,20 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
+         float x = r.left + 34 * k;
+         c.drawText(weatherTitle, x, r.top + 54 * k, cardTitle);
+         HomeData.Weather wx = textWeather;
++        HomeData.Weather wx2 = data.weather2;
++        if (HomeData.hasSecond() && !Double.isNaN(wx2.temp)) {
++            // The second city in the title row, right-aligned: "Maceió  ☁ 28°".
++            String t2 = HomeData.degrees(wx2.temp), name2 = HomeData.secondCity();
++            float rx = r.right - 34 * k, base2 = r.top + 54 * k;
++            float tw = cardTitle.measureText(t2);
++            c.drawText(t2, rx - tw, base2, cardTitle);
++            rx -= tw + 10 * k;
++            String s2 = Symbols.weather(wx2.code, wx2.isDay);
++            float sw2 = Symbols.width(getContext(), s2, 28 * k);
++            Symbols.draw(getContext(), c, s2, rx - sw2 / 2, base2 - Ui.halfCap(cardTitle), 28 * k, drawerInk(0.9f));
++            rx -= sw2 + 12 * k;
++            c.drawText(name2, rx - cardTitle.measureText(name2), base2, cardTitle);
++        }
+         if (Double.isNaN(wx.temp)) {
+             c.drawText(Ui.tr("No weather data right now."), x, r.top + 120 * k, cardDim);
+             return;
+@@ -2318,7 +2334,7 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
+      * sunrise and sunset, "12 min ago").
+      */
+     private String drawerCardsKey() {
+-        return data.weatherAt + "|" + data.pricesAt + "|" + Prefs.version + "|" + Ui.language + "|"
++        return data.weatherAt + "|" + data.weather2At + "|" + data.pricesAt + "|" + Prefs.version + "|" + Ui.language + "|"
+                 + Float.floatToIntBits(dark()) + "|" + System.currentTimeMillis() / 60_000;
+     }
+ 
+@@ -3919,6 +3935,11 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
+         StringBuilder s = new StringBuilder(Prefs.city().isEmpty() ? Ui.tr("Weather") : Prefs.city());
+         HomeData.Weather wx = data.weather;
+         if (Double.isNaN(wx.temp)) return s.append(". ").append(Ui.tr("No weather data right now.")).toString();
++        HomeData.Weather wx2 = data.weather2;
++        if (HomeData.hasSecond() && !Double.isNaN(wx2.temp)) {
++            s.append(". ").append(HomeData.secondCity()).append(": ").append(HomeData.degrees(wx2.temp)).append(", ")
++                    .append(HomeData.condition(wx2.code, wx2.isDay)).append(". ").append(Prefs.city());
++        }
+         s.append(". ").append(HomeData.degrees(wx.temp)).append(", ").append(HomeData.condition(wx.code, wx.isDay)).append(". ")
+                 .append(Ui.trf("High {max}, low {min}.", "max", HomeData.degrees(wx.max), "min", HomeData.degrees(wx.min)));
+         if (Prefs.forecast().equals("days") && !wx.days.isEmpty()) {   // as the card: the hours until there are days
+@@ -4653,20 +4674,42 @@ final class HomeView extends ViewGroup implements Choreographer.FrameCallback, H
+         float x = MARGIN * k;
+         c.drawText(dateText, x - Ui.leftBearing(lDate, dateText), L_DATE_BASE * k, lDate);
+         c.drawText(clockText, x - Ui.leftBearing(lClock, clockText), L_CLOCK_BASE * k, lClock);
+-        HomeData.Weather wx = data.weather;
++        HomeData.Weather wx = data.weather, wx2 = data.weather2;
+         if (!Prefs.weather() || Double.isNaN(wx.temp)) return;
+-        if (data.weatherAt != weatherLineAt || Prefs.version != weatherLinePrefs || !Ui.language.equals(weatherLineLanguage)) {
++        // With a second city (config.properties: city2), both side by side, each with its name: "Murici 27° Sunny".
++        boolean two = HomeData.hasSecond() && !Double.isNaN(wx2.temp);
++        if (data.weatherAt != weatherLineAt || data.weather2At != weatherLine2At || two != weatherLineTwo
++                || Prefs.version != weatherLinePrefs || !Ui.language.equals(weatherLineLanguage)) {
+             weatherLineAt = data.weatherAt;
++            weatherLine2At = data.weather2At;
++            weatherLineTwo = two;
+             weatherLinePrefs = Prefs.version;
+             weatherLineLanguage = Ui.language;
+-            weatherLine = HomeData.degrees(wx.temp) + "  " + HomeData.condition(wx.code, wx.isDay) + "   "
+-                    + HomeData.highLow(wx, "  ");
++            if (two) {
++                String first = Prefs.city().isEmpty() ? Ui.tr("Weather") : Prefs.city();
++                weatherLine = first + "  " + HomeData.degrees(wx.temp) + "  " + HomeData.condition(wx.code, wx.isDay);
++                weatherLine2 = HomeData.secondCity() + "  " + HomeData.degrees(wx2.temp) + "  " + HomeData.condition(wx2.code, wx2.isDay);
++            } else {
++                weatherLine = HomeData.degrees(wx.temp) + "  " + HomeData.condition(wx.code, wx.isDay) + "   "
++                        + HomeData.highLow(wx, "  ");
++            }
+         }
+         float size = 40 * k, base = L_WEATHER_BASE * k;
+         String symbol = Symbols.weather(wx.code, wx.isDay);
+         float sw = Symbols.width(getContext(), symbol, size);
+         Symbols.draw(getContext(), c, symbol, x + sw / 2, base - Ui.halfCap(lWeather), size, lWeather.getColor());
+         c.drawText(weatherLine, x + sw + 16 * k, base, lWeather);
++        if (!two) return;
++        float x2 = x + sw + 16 * k + lWeather.measureText(weatherLine) + 34 * k;
++        fill.setShader(null);
++        fill.setColor(Ui.alpha(lWeather.getColor(), 0.35f));
++        float cap = Ui.cap(lWeather);
++        c.drawRoundRect(x2, base - cap - 2 * k, x2 + 2 * k, base + 2 * k, k, k, fill);   // a thin divider between the cities
++        x2 += 2 * k + 34 * k;
++        String symbol2 = Symbols.weather(wx2.code, wx2.isDay);
++        float sw2 = Symbols.width(getContext(), symbol2, size);
++        Symbols.draw(getContext(), c, symbol2, x2 + sw2 / 2, base - Ui.halfCap(lWeather), size, lWeather.getColor());
++        c.drawText(weatherLine2, x2 + sw2 + 16 * k, base, lWeather);
+     }
+ 
+     /**
+diff --git a/build.sh b/build.sh
+index e68f00e..d236db6 100755
+--- a/build.sh
++++ b/build.sh
+@@ -49,11 +49,13 @@ number() {
+   printf '%s' "$v"
+ }
+ if $GENERIC; then
+-  LAT=""; LON=""; REGION=""; CURRENCY=""
++  LAT=""; LON=""; REGION=""; CURRENCY=""; LAT2=""; LON2=""
+ else
+   LAT="$(number latitude 40.7128)"
+   LON="$(number longitude -74.0060)"
+   REGION="$(prop tmdb_region US)"
++  LAT2="$(prop latitude2 '')"; LON2="$(prop longitude2 '')"
++  if [ -n "$LAT2$LON2" ]; then LAT2="$(number latitude2 0)"; LON2="$(number longitude2 0)"; fi
+   CURRENCY="$(prop currency USD)"
+ fi
+ ASSIST=false; [ "$(prop disable_assistant false)" = "true" ] && ASSIST=true
+@@ -61,6 +63,7 @@ CRYPTO=false; [ "$(prop show_crypto true)" = "true" ] && CRYPTO=true
+ ANIMATION=false; [ "$(prop hide_animation false)" = "true" ] && ANIMATION=true
+ SAVER=true; [ "$(prop screensaver true)" = "false" ] && SAVER=false
+ STREMIO=false; [ "$(prop open_in_stremio false)" = "true" ] && STREMIO=true
++GLASS=false; [ "$(prop home_style classic)" = "glass" ] && GLASS=true
+ 
+ # Servers on your own network (Immich, and the next feature that needs one) often answer in plain HTTP. One rule for
+ # all of them: a server given as http:// must be on the local network, and only its host may skip HTTPS
+@@ -124,6 +127,10 @@ final class Config {
+     static final String LATITUDE = "$LAT";
+     static final String LONGITUDE = "$LON";
+     static final String CITY = "$(prop city '')";
++    static final String LATITUDE2 = "$LAT2";
++    static final String LONGITUDE2 = "$LON2";
++    static final String CITY2 = "$(prop city2 '')";
++    static final boolean GLASS = $GLASS;   // home_style=glass: the web home screen in assets/glass
+     static final String LANGUAGE = "$(prop language auto)";
+     static final String CURRENCY = "$CURRENCY";
+     static final String TEMPERATURE = "$(prop temperature auto)";
+diff --git a/config.example.properties b/config.example.properties
+index 3758fe1..3eeb410 100644
+--- a/config.example.properties
++++ b/config.example.properties
+@@ -12,6 +12,13 @@ latitude=40.7128
+ longitude=-74.0060
+ # Optional: the name shown on the weather card (empty = "Weather").
+ city=
++# Home screen look on Google TV: classic, or glass (a sunset, a frosted side menu and the apps by category).
++home_style=classic
++
++# Optional: a second city whose weather shows next to the first one (decimal degrees and its name).
++latitude2=
++longitude2=
++city2=
+ 
+ # true leaves cartoons and anime (TMDB's Animation genre) out of the picks. Home Settings changes it on the TV
+ # ("Cartoons and anime").
