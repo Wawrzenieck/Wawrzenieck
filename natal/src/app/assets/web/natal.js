@@ -26,8 +26,27 @@ function pine(c, x, base, h, r) {
   c.fillRect(x - h * 0.03, base, h * 0.06, h * 0.08);
 }
 
+/** The scene at the box's own resolution (1280 x 720), kept once painted: a slow box paints it only the first time. */
+var SCENE_KEY = "scene-v1";
 function paintScene() {
-  var c = $("#scene").getContext("2d"), r = rng(1224);
+  var cv = $("#scene"), c = cv.getContext("2d");
+  var saved = null;
+  try { saved = localStorage.getItem(SCENE_KEY); } catch (e) {}
+  if (saved) {
+    var im = new Image();
+    im.onload = function () { c.drawImage(im, 0, 0); };
+    im.src = saved;
+    return;
+  }
+  c.save();
+  c.scale(cv.width / W, cv.height / H);
+  drawScene(c);
+  c.restore();
+  try { localStorage.setItem(SCENE_KEY, cv.toDataURL("image/jpeg", 0.9)); } catch (e) {}
+}
+
+function drawScene(c) {
+  var r = rng(1224);
   var g = c.createRadialGradient(W * 0.5, H * 0.35, 80, W * 0.5, H * 0.45, W * 0.75);
   g.addColorStop(0, "#6b2a17");
   g.addColorStop(0.45, "#3d130c");

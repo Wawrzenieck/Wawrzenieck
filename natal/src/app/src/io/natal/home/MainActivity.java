@@ -74,6 +74,12 @@ public class MainActivity extends Activity {
         web.setFocusable(true);
         web.setFocusableInTouchMode(true);
         web.addJavascriptInterface(new Bridge(), "TV");
+        web.setWebChromeClient(new android.webkit.WebChromeClient() {
+            @Override public boolean onConsoleMessage(android.webkit.ConsoleMessage m) {
+                if (m.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) android.util.Log.w("NatalHome", m.message());
+                return true;
+            }
+        });
         web.setWebViewClient(new WebViewClient() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
                 Uri u = req.getUrl();
@@ -261,7 +267,8 @@ public class MainActivity extends Activity {
                 } catch (Exception ignored) {
                 }
                 final String json = body == null ? "null" : JSONObject.quote(body);
-                runOnUiThread(() -> js("window.onWeather && onWeather(" + json + ")"));
+                // Straight to the page: the first answer can come before onPageFinished.
+                runOnUiThread(() -> web.evaluateJavascript("window.onWeather && onWeather(" + json + ")", null));
             }).start();
         }
     }
