@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920, user-scalable=no">
+<title>Natal em Família</title>
+<link rel="stylesheet" href="natal.css">
+</head>
+<body>
+<canvas id="scene" width="1920" height="1080"></canvas>
+<canvas id="snow" width="960" height="540"></canvas>
+
+<header id="top">
+  <h1 id="hello">Feliz Natal!</h1>
+  <div id="clockBox">
+    <div id="time">--:--</div>
+    <div id="date"></div>
+  </div>
+</header>
+
+<section id="weather">
+  <div class="wtitle">Previsão do Tempo</div>
+  <div class="wrow">
+    <img id="wicon" src="symbols/partly_cloudy_day.png" alt="">
+    <div>
+      <div id="wtemp">--°C</div>
+      <div id="wcond">Carregando…</div>
+      <div id="wcity">Murici, AL</div>
+    </div>
+  </div>
+</section>
+
+<section id="photoBox" class="f" data-nav="photo">
+  <div class="wood">
+    <div class="pic">
+      <canvas class="blur" width="192" height="108"></canvas>
+      <img class="ph a" alt="">
+      <img class="ph b" alt="">
+      <div class="empty">As fotos aparecem aqui</div>
+    </div>
+  </div>
+  <canvas class="garland" width="1000" height="580"></canvas>
+  <div class="lights"></div>
+</section>
+<div id="photoLabel">Fotos de Família</div>
+
+<section id="app1" class="tile f" data-nav="app1" data-pkg="com.world.youcinetv"><img alt=""><span>YouCine</span></section>
+<section id="app2" class="tile f" data-nav="app2" data-pkg="org.smarttube.stable"><img alt=""><span>SmartTube</span></section>
+<div id="allBtn" class="f" data-nav="all"><img src="symbols/apps.png" alt="">Todos os apps</div>
+
+<div id="viewer">
+  <canvas class="blur" width="192" height="108"></canvas>
+  <img class="big" alt="">
+  <div class="count"></div>
+  <div class="hint">◀ ▶ trocar foto &nbsp;·&nbsp; Voltar para fechar</div>
+</div>
+
+<div id="apps">
+  <div class="sheet">
+    <h2>Todos os apps</h2>
+    <div class="grid"></div>
+  </div>
+</div>
+
+<script src="natal.js"></script>
+</body>
+</html>
