@@ -113,7 +113,7 @@ var flakes = [], snowOn = true, lastFrame = 0;
 
 function startSnow() {
   var r = rng(7);
-  for (var i = 0; i < 110; i++) {
+  for (var i = 0; i < 80; i++) {
     flakes.push({ x: r() * 960, y: r() * 540, s: 0.6 + r() * 1.8, v: 0.25 + r() * 0.75, p: r() * 6.28, w: 0.3 + r() * 0.7 });
   }
   requestAnimationFrame(snowFrame);
@@ -347,11 +347,34 @@ function appFocus(i) {
 
 // MARK: - Focus and the remote
 
-var current = "app1";
+var current = "app1", halos = {};
+
+/** A glow behind each item, made once: focus only fades one in (and scales it with its item). */
+function makeHalos() {
+  var spots = {   // the glowing outline of each item, in page pixels (a ring around its edge)
+    photo: [150 + 20 - 12, 380 + 20 - 12, 1000 - 40 + 24, 580 - 40 + 24, 36, 1.03],
+    app1: [1230 - 10, 380 - 10, 540 + 20, 270 + 20, 42, 1.06],
+    app2: [1230 - 10, 690 - 10, 540 + 20, 270 + 20, 42, 1.06]
+  };
+  Object.keys(spots).forEach(function (k) {
+    var s = spots[k], h = document.createElement("div");
+    h.className = "halo";
+    h.style.cssText = "left:" + s[0] + "px;top:" + s[1] + "px;width:" + s[2] + "px;height:" + s[3] + "px;border-radius:" + s[4] + "px";
+    h.dataset.scale = s[5];
+    document.body.appendChild(h);
+    halos[k] = h;
+  });
+}
+
 function focus(name) {
   current = name;
   var items = document.querySelectorAll(".f");
   for (var i = 0; i < items.length; i++) items[i].classList.toggle("focused", items[i].dataset.nav === name);
+  Object.keys(halos).forEach(function (k) {
+    var h = halos[k], on = k === name;
+    h.classList.toggle("on", on);
+    h.style.transform = on ? "scale(" + h.dataset.scale + ")" : "";
+  });
 }
 
 function activate() {
@@ -408,6 +431,7 @@ paintGarland();
 startSnow();
 tick();
 setupTiles();
+makeHalos();
 loadPhotos();
 bridge.weather();
 setInterval(function () { bridge.weather(); }, 30 * 60000);

@@ -32,7 +32,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #200a0
 
 /* MARK: - Photo frame */
 #photoBox { position: absolute; left: 150px; top: 380px; width: 1000px; height: 580px; z-index: 2;
-  transition: transform 0.25s ease, filter 0.25s ease; }
+  will-change: transform; transition: transform 0.12s ease-out; }
 #photoBox .wood { position: absolute; left: 20px; top: 20px; right: 20px; bottom: 20px; padding: 18px; border-radius: 26px;
   background: linear-gradient(135deg, #8a5a32, #5b3418 40%, #7a4a26 60%, #4a2812);
   box-shadow: 0 0 0 4px #f3d9a4, 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(0, 0, 0, 0.6); }
@@ -53,7 +53,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #200a0
 .tile { position: absolute; left: 1230px; width: 540px; height: 270px; z-index: 2; overflow: hidden;
   border-radius: 34px; background: #fff; border: 6px solid #f6d8a8;
   box-shadow: 0 0 0 3px rgba(190, 30, 30, 0.85), 0 20px 50px rgba(0, 0, 0, 0.5);
-  transition: transform 0.25s ease, box-shadow 0.25s ease; }
+  will-change: transform; transition: transform 0.12s ease-out; }
 #app1 { top: 380px; }
 #app2 { top: 690px; }
 .tile img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -62,14 +62,17 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #200a0
 
 #allBtn { position: absolute; right: 150px; top: 990px; z-index: 2; height: 62px; padding: 0 30px 0 22px; border-radius: 31px;
   display: flex; align-items: center; font-size: 28px; font-weight: 600; color: #fff;
-  background: rgba(28, 33, 48, 0.72); border: 2px solid rgba(255, 255, 255, 0.25); transition: transform 0.2s ease; }
+  background: rgba(28, 33, 48, 0.72); border: 2px solid rgba(255, 255, 255, 0.25); will-change: transform; transition: transform 0.12s ease-out; }
 #allBtn img { width: 34px; height: 34px; margin-right: 12px; }
 
-/* Focus: a warm golden glow, a little bigger. */
+/* Focus: a warm golden glow, a little bigger. The glow (.halo) is painted once behind each item and only fades in and
+   out, and the size change is a transform: both stay on the GPU, so a slow box changes focus without repainting. */
+.halo { position: absolute; z-index: 1; border-radius: 40px; opacity: 0; pointer-events: none;
+  background: #ffd24a; box-shadow: 0 0 40px 14px rgba(255, 196, 70, 0.95), 0 0 110px 30px rgba(255, 170, 60, 0.55);
+  will-change: opacity, transform; transition: opacity 0.12s ease-out, transform 0.12s ease-out; }
+.halo.on { opacity: 1; }
 #photoBox.focused { transform: scale(1.03); }
-#photoBox.focused .wood { box-shadow: 0 0 0 6px #ffd76a, 0 0 50px rgba(255, 200, 90, 0.85), 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(0, 0, 0, 0.6); }
-.tile.focused { transform: scale(1.06);
-  box-shadow: 0 0 0 6px #ffd76a, 0 0 60px rgba(255, 200, 90, 0.9), 0 24px 60px rgba(0, 0, 0, 0.55); }
+.tile.focused { transform: scale(1.06); }
 #allBtn.focused { transform: scale(1.08); background: #fff; color: #3a0e0a; border-color: #ffd76a; }
 #allBtn.focused img { filter: invert(1); }
 
