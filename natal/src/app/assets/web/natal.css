@@ -27,6 +27,7 @@ html, body { width: 1920px; height: 1080px; overflow: hidden; background: #200a0
 #wicon { width: 132px; height: 132px; margin-right: 26px; }
 #wtemp { font-size: 76px; font-weight: 600; line-height: 1; }
 #wcond { font-size: 30px; font-weight: 500; margin-top: 6px; }
+#whl { font-size: 24px; font-weight: 500; margin-top: 6px; color: #ffe2a8; }
 #wcity { font-size: 24px; color: rgba(255, 255, 255, 0.72); margin-top: 6px; }
 
 /* MARK: - Photo frame */

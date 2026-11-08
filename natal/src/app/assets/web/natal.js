@@ -225,6 +225,7 @@ window.onWeather = function (body) {
     $("#wtemp").textContent = Math.round(cur.temperature_2m) + "°C";
     $("#wcond").textContent = condition(cur.weather_code);
     $("#wicon").src = "symbols/" + weatherIcon(cur.weather_code, cur.is_day === 1) + ".png";
+    if (o.daily) $("#whl").textContent = "Máx. " + Math.round(o.daily.temperature_2m_max[0]) + "°  Mín. " + Math.round(o.daily.temperature_2m_min[0]) + "°";
   } catch (e) {}
 };
 
@@ -398,7 +399,7 @@ function mockBridge() {   // a browser on a computer: sample data
     photos: function () { var a = []; for (var i = 1; i <= 14; i++) a.push("foto" + (i < 10 ? "0" : "") + i + ".jpg"); return JSON.stringify(a); },
     photoUrl: function (n) { return "../../../fotos/" + n; },
     open: function (p) { console.log("open " + p); },
-    weather: function () { setTimeout(function () { onWeather(JSON.stringify({ current: { temperature_2m: 27.4, weather_code: 2, is_day: 1 } })); }, 100); }
+    weather: function () { setTimeout(function () { onWeather(JSON.stringify({ current: { temperature_2m: 27.4, weather_code: 2, is_day: 1 }, daily: { temperature_2m_max: [31.2], temperature_2m_min: [22.4] } })); }, 100); }
   };
 }
 
