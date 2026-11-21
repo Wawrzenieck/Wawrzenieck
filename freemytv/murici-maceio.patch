@@ -774,10 +774,10 @@ index 0000000..eca471f
 +</html>
 diff --git a/app/assets/natal/index.html b/app/assets/natal/index.html
 new file mode 100644
-index 0000000..a29ad71
+index 0000000..e404683
 --- /dev/null
 +++ b/app/assets/natal/index.html
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,86 @@
 +<!doctype html>
 +<html lang="pt-BR">
 +<head>
@@ -787,6 +787,7 @@ index 0000000..a29ad71
 +<link rel="stylesheet" href="natal.css">
 +</head>
 +<body>
++<img id="bg" alt="">
 +<canvas id="scene" width="1920" height="1080"></canvas>
 +<div id="twinkles"></div>
 +<canvas id="snow" width="1920" height="1080"></canvas>
@@ -853,9 +854,9 @@ index 0000000..a29ad71
 +<nav id="side">
 +  <div class="m f" data-sec="home"><svg><use href="#i-home"/></svg><span>Início</span></div>
 +  <div class="m f" data-sec="movies"><svg><use href="#i-film"/></svg><span>Filmes</span></div>
-+  <div class="m f" data-sec="music"><svg><use href="#i-music"/></svg><svg class="mhat"><use href="#hat"/></svg><span>Músicas</span></div>
++  <div class="m f" data-sec="music"><svg><use href="#i-music"/></svg><svg class="mhat" style="left:104px;top:-6px"><use href="#hat"/></svg><span>Músicas</span></div>
 +  <div class="m f" data-sec="settings"><svg><use href="#i-gear"/></svg><span>Configurações</span></div>
-+  <div class="m f" data-sec="search"><svg><use href="#i-search"/></svg><svg class="mhat"><use href="#hat"/></svg><span>Pesquisar</span></div>
++  <div class="m f" data-sec="search"><svg><use href="#i-search"/></svg><svg class="mhat" style="left:92px;top:-16px"><use href="#hat"/></svg><span>Pesquisar</span></div>
 +</nav>
 +
 +<main id="content"></main>
@@ -865,10 +866,10 @@ index 0000000..a29ad71
 +</html>
 diff --git a/app/assets/natal/natal.css b/app/assets/natal/natal.css
 new file mode 100644
-index 0000000..b8621c2
+index 0000000..31065e5
 --- /dev/null
 +++ b/app/assets/natal/natal.css
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,89 @@
 +@font-face { font-family: "Inter"; src: url("../fonts/InterVariable.ttf") format("truetype"); font-weight: 100 900; }
 +
 +* { box-sizing: border-box; margin: 0; padding: 0; }
@@ -876,90 +877,94 @@ index 0000000..b8621c2
 +html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0a1630; color: #fff;
 +  font-family: "Inter", sans-serif; cursor: none; user-select: none; -webkit-font-smoothing: antialiased; }
 +
++/* The background: a picture of the scene (files/natal-bg.jpg, laid out like the reference) or, without one, a painted one. */
++#bg { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: none; }
++.withbg #bg { display: block; }
++.withbg #scene, .withbg #twinkles, .withbg #wreath, .withbg #corner { display: none; }
 +#scene, #snow { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
 +#snow { z-index: 1; pointer-events: none; }
 +#twinkles { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 1; pointer-events: none; }
 +#twinkles span { position: absolute; border-radius: 50%; animation: tw 2.6s ease-in-out infinite; }
 +@keyframes tw { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 +
-+/* MARK: - Header: wreath, clock, weather */
-+#head { position: absolute; left: 50px; top: 95px; height: 170px; display: flex; align-items: center; z-index: 3; }
-+#wreath { width: 170px; height: 170px; margin-right: 24px; }
-+#time { font-size: 104px; font-weight: 500; letter-spacing: -2px; line-height: 1; text-shadow: 0 4px 24px rgba(0, 10, 40, 0.6); }
-+#date { font-size: 30px; font-weight: 500; margin-top: 12px; letter-spacing: 1px; color: #eef3ff; }
-+#sep { width: 2px; height: 110px; margin: 0 36px; background: rgba(255, 255, 255, 0.35); }
++/* MARK: - Header: clock, date, weather (the wreath is in the picture) */
++#wreath { position: absolute; left: 50px; top: 30px; width: 170px; height: 170px; z-index: 3; }
++#head { position: absolute; left: 238px; top: 44px; height: 140px; display: flex; align-items: center; z-index: 3; }
++#time { font-size: 94px; font-weight: 400; letter-spacing: -1px; line-height: 1; text-shadow: 0 4px 24px rgba(0, 10, 40, 0.6); }
++#date { font-size: 29px; font-weight: 400; margin-top: 2px; letter-spacing: 0.5px; color: #f2f5ff; text-shadow: 0 2px 10px rgba(0, 10, 40, 0.7); }
++#sep { width: 2px; height: 104px; margin: 0 28px; background: rgba(255, 255, 255, 0.45); }
 +#wx { display: flex; align-items: center; }
-+#wxicon { width: 96px; height: 96px; margin-right: 18px; filter: drop-shadow(0 4px 14px rgba(0, 20, 60, 0.6)); }
-+#wxtemp { font-size: 54px; font-weight: 500; line-height: 1; }
-+#wxcity { font-size: 22px; color: rgba(235, 242, 255, 0.85); margin-top: 8px; white-space: nowrap; }
++#wxicon { width: 92px; height: 92px; margin-right: 16px; filter: drop-shadow(0 4px 14px rgba(0, 20, 60, 0.6)); }
++#wxtemp { font-size: 46px; font-weight: 500; line-height: 1; text-shadow: 0 2px 10px rgba(0, 10, 40, 0.7); }
++#wxcity { font-size: 21px; color: rgba(240, 245, 255, 0.9); margin-top: 8px; white-space: nowrap; text-shadow: 0 2px 8px rgba(0, 10, 40, 0.8); }
++#corner { position: absolute; right: 70px; top: 70px; z-index: 3; display: flex; }
++#corner .ci { width: 58px; height: 58px; margin-left: 34px; filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.5)); }
 +
-+#corner { position: absolute; right: 150px; top: 140px; z-index: 3; display: flex; }
-+#corner .ci { width: 62px; height: 62px; margin-left: 36px; filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.5)); }
-+
-+/* MARK: - Side menu */
-+#side { position: absolute; left: 0; top: 300px; width: 290px; bottom: 0; z-index: 3; padding-top: 34px;
-+  background: linear-gradient(90deg, rgba(10, 20, 44, 0.92), rgba(12, 24, 52, 0.82));
-+  border-top-right-radius: 36px; box-shadow: 10px 0 40px rgba(0, 0, 0, 0.35); }
-+.m { position: relative; width: 230px; height: 140px; margin: 0 auto 6px; border-radius: 26px;
++/* MARK: - Side menu: over the picture's own icons, only the highlight (and the hats) */
++#side { position: absolute; left: 0; top: 0; width: 285px; bottom: 0; z-index: 3;
++  background: linear-gradient(90deg, rgba(10, 20, 44, 0.92), rgba(12, 24, 52, 0.82)); }
++.withbg #side { background: none; }
++.m { position: absolute; left: 22px; width: 240px; height: 150px; border-radius: 26px;
 +  display: flex; flex-direction: column; align-items: center; justify-content: center;
-+  color: rgba(230, 238, 255, 0.72); font-size: 26px; font-weight: 500;
-+  transition: background 0.12s, color 0.12s, transform 0.12s; }
-+.m svg { width: 82px; height: 82px; margin-bottom: 8px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)); }
-+.m .mhat { position: absolute; width: 64px; height: 54px; left: 112px; top: 8px; transform: rotate(14deg); margin: 0; }
-+.m.current { color: #fff; }
-+.m.current::before { content: ""; position: absolute; left: -26px; top: 36px; width: 6px; height: 68px; border-radius: 3px; background: #ffd24a; }
-+.m.focused { background: rgba(255, 255, 255, 0.16); color: #fff; transform: scale(1.05); }
++  color: rgba(230, 238, 255, 0.75); font-size: 27px; font-weight: 400;
++  transition: background 0.12s, box-shadow 0.12s; }
++.m:nth-child(1) { top: 282px; } .m:nth-child(2) { top: 432px; } .m:nth-child(3) { top: 580px; }
++.m:nth-child(4) { top: 722px; } .m:nth-child(5) { top: 872px; }
++.m svg { width: 86px; height: 86px; margin-bottom: 6px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)); }
++.withbg .m > svg:first-child, .withbg .m span { visibility: hidden; }
++.m .mhat { position: absolute; width: 82px; height: 68px; transform: rotate(12deg); margin: 0; visibility: visible !important; }
++.m.current::before { content: ""; position: absolute; left: -14px; top: 40px; width: 6px; height: 70px; border-radius: 3px; background: #ffd24a;
++  box-shadow: 0 0 12px rgba(255, 210, 74, 0.8); }
++.m.focused { background: rgba(255, 255, 255, 0.13); box-shadow: 0 0 0 3px rgba(255, 224, 138, 0.9), 0 0 30px rgba(255, 205, 90, 0.45); }
 +
-+/* MARK: - Content */
-+#content { position: absolute; left: 330px; right: 0; top: 280px; bottom: 0; z-index: 2; overflow: hidden; }
-+.label { position: absolute; font-size: 30px; font-weight: 600; letter-spacing: 1.5px; color: #eef3ff;
-+  text-shadow: 0 2px 12px rgba(0, 10, 40, 0.8); white-space: nowrap; }
-+.rowbox { position: absolute; left: 0; right: 0; overflow: hidden; }
++/* MARK: - Rows and grids */
++#content { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 2; pointer-events: none; }
++.label { position: absolute; font-size: 29px; font-weight: 500; letter-spacing: 0.5px; color: #f2f5ff;
++  text-shadow: 0 2px 12px rgba(0, 10, 40, 0.85); white-space: nowrap; }
++.rowbox { position: absolute; left: 325px; right: 0; overflow: hidden; }
 +.track { position: absolute; left: 20px; top: 0; height: 100%; will-change: transform; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
 +
-+/* Posters: a gold frame; focused, it grows and glows (the glow is a ::after that only fades). */
-+.p { position: absolute; top: 56px; width: 230px; height: 330px; border-radius: 16px; background: #13254a;
-+  border: 4px solid #d9b45a; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5); will-change: transform; transition: transform 0.14s ease-out; }
-+.p img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
++/* Posters: a thin gold frame; focused, it grows and glows. */
++.p { position: absolute; top: 58px; width: 262px; height: 322px; border-radius: 14px; background: #13254a;
++  border: 4px solid #d6b25e; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5); will-change: transform; transition: transform 0.14s ease-out; }
++.p img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
 +.p .t { position: absolute; left: 14px; right: 14px; top: 40%; text-align: center; font-size: 26px; font-weight: 700; color: #ffe7b0; }
-+.p::after, .a::after, .card::after { content: ""; position: absolute; left: -8px; top: -8px; right: -8px; bottom: -8px; border-radius: 22px;
-+  border: 4px solid #ffe08a; box-shadow: 0 0 34px 10px rgba(255, 205, 90, 0.75); opacity: 0; transition: opacity 0.14s ease-out; pointer-events: none; }
-+.p.focused { transform: scale(1.07); z-index: 2; }
++.p::after, .a::after, .card::after { content: ""; position: absolute; left: -8px; top: -8px; right: -8px; bottom: -8px; border-radius: 20px;
++  border: 4px solid #ffe08a; box-shadow: 0 0 34px 10px rgba(255, 205, 90, 0.7); opacity: 0; transition: opacity 0.14s ease-out; pointer-events: none; }
++.p.focused { transform: scale(1.08); z-index: 2; }
 +.p.focused::after, .a.focused::after, .card.focused::after { opacity: 1; }
-+.grouplabel { position: absolute; top: 0; font-size: 30px; font-weight: 600; letter-spacing: 1.5px; color: #eef3ff;
-+  text-shadow: 0 2px 12px rgba(0, 10, 40, 0.8); white-space: nowrap; }
-+.caption { position: absolute; left: 20px; top: 384px; font-size: 24px; color: rgba(240, 245, 255, 0.85); white-space: nowrap;
-+  text-shadow: 0 2px 10px rgba(0, 10, 40, 0.9); }
++.caption { position: absolute; left: 345px; top: 626px; font-size: 22px; color: rgba(240, 245, 255, 0.9); white-space: nowrap;
++  text-shadow: 0 2px 10px rgba(0, 10, 40, 0.95); }
 +
 +/* Apps: rounded icons wearing Santa hats. */
-+.a { position: absolute; top: 46px; width: 150px; height: 150px; border-radius: 34px; background: #fff;
++.a { position: absolute; top: 44px; width: 136px; height: 136px; border-radius: 30px; background: #fff;
 +  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5); will-change: transform; transition: transform 0.14s ease-out; }
-+.a img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 34px; }
-+.a .hat { position: absolute; width: 104px; height: 86px; right: -26px; top: -48px; transform: rotate(16deg); z-index: 2;
++.a img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 30px; }
++.a .hat { position: absolute; width: 100px; height: 84px; right: -24px; top: -44px; transform: rotate(14deg); z-index: 2;
 +  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35)); }
 +.a.focused { transform: scale(1.12); z-index: 2; }
-+.a::after { border-radius: 40px; }
++.a::after { border-radius: 36px; }
 +
 +/* Cards (other sections). */
 +.card { position: absolute; width: 400px; height: 220px; border-radius: 26px; display: flex; flex-direction: column; align-items: center;
 +  justify-content: center; background: linear-gradient(150deg, rgba(40, 64, 120, 0.85), rgba(16, 30, 64, 0.9));
-+  border: 2px solid rgba(217, 180, 90, 0.7); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
++  border: 2px solid rgba(214, 178, 94, 0.75); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
 +  font-size: 28px; font-weight: 600; text-align: center; padding: 0 20px; will-change: transform; transition: transform 0.14s ease-out; }
 +.card img { width: 86px; height: 86px; margin-bottom: 16px; border-radius: 20px; }
 +.card small { display: block; font-size: 21px; font-weight: 400; color: rgba(235, 242, 255, 0.75); margin-top: 8px; }
 +.card.focused { transform: scale(1.06); z-index: 2; }
-+.card.wide { width: 1100px; height: 330px; align-items: flex-start; text-align: left; padding: 0 54px; font-size: 34px; }
-+.card.wide small { font-size: 26px; line-height: 1.5; margin-top: 14px; }
 +
 +#toast { position: absolute; left: 50%; bottom: 40px; z-index: 9; transform: translate(-50%, 30px); padding: 16px 30px; border-radius: 40px;
-+  background: rgba(10, 20, 44, 0.85); border: 2px solid rgba(217, 180, 90, 0.6); font-size: 24px; opacity: 0; transition: opacity 0.25s, transform 0.25s; }
++  background: rgba(10, 20, 44, 0.85); border: 2px solid rgba(214, 178, 94, 0.6); font-size: 24px; opacity: 0; transition: opacity 0.25s, transform 0.25s; }
 +#toast.on { opacity: 1; transform: translate(-50%, 0); }
++.card.wide { width: 1100px; height: 322px; align-items: flex-start; text-align: left; padding: 0 54px; font-size: 34px; }
++.card.wide small { font-size: 26px; line-height: 1.5; margin-top: 14px; }
 diff --git a/app/assets/natal/natal.js b/app/assets/natal/natal.js
 new file mode 100644
-index 0000000..9db4e66
+index 0000000..62dc599
 --- /dev/null
 +++ b/app/assets/natal/natal.js
-@@ -0,0 +1,572 @@
+@@ -0,0 +1,587 @@
 +/* The Christmas home screen (home_style=natal): a snowy night with a garland, a village and a tree, posters from
 + * Free My TV's recommendations and TMDB's Christmas movies, and the TV's apps wearing Santa hats.
 + * Talks to the app through window.TV (GlassHome.Bridge). */
@@ -1226,7 +1231,7 @@ index 0000000..9db4e66
 +
 +// MARK: - Data
 +
-+var items = [], picks = [], xmas = [], hasKey = false;
++var items = [], picks = [], xmas = [], hasKey = false, stTop = [], stXmas = [];
 +var APP_ORDER = ["com.world.youcinetv", "org.smarttube.stable", "com.stremio.one", "com.globo.globotv", "com.disney.disneyplus",
 +  "com.netflix.ninja", "com.amazon.amazonvideo.livingroom", "com.spotify.tv.android", "com.google.android.youtube.tv", "com.ilv.vradio"];
 +var HIDE = ["io.freemytv"];
@@ -1249,6 +1254,15 @@ index 0000000..9db4e66
 +  try { xmas = JSON.parse(json); } catch (e) { xmas = []; }
 +  if (section === "home" || section === "movies") rerender();
 +};
++/** Stremio's own catalog (no key needed): popular titles and Christmas movies, opening in Stremio. */
++window.onStremio = function (json) {
++  var o = {};
++  try { o = JSON.parse(json); } catch (e) {}
++  stTop = o.top || []; stXmas = o.xmas || [];
++  if (section === "home" || section === "movies") rerender();
++};
++function recList() { return hasKey && picks.length ? picks : stTop; }
++function xmasList() { return hasKey && xmas.length ? xmas : stXmas; }
 +window.onPicks = function () {
 +  loadPicks();
 +  if (section === "home" || section === "movies") rerender();
@@ -1285,41 +1299,42 @@ index 0000000..9db4e66
 +function keyCard(x, top) {
 +  var e = el("div", "card wide");
 +  e.dataset.action = "settings"; e.style.left = x + "px"; e.style.top = top + "px";
-+  e.innerHTML = "🎄 Filmes recomendados e filmes de Natal<small>Para ver os pôsteres aqui, adicione sua chave gratuita do TMDB:<br>" +
-+    "Configurações → Ajustes do Free My TV → Ajustes do Início → Chave do TMDB.<br>Aperte OK para abrir.</small>";
++  e.innerHTML = "🎄 Carregando filmes…<small>Os pôsteres vêm do catálogo do Stremio e aparecem em instantes.<br>" +
++    "Sem internet? Confira o Wi-Fi em Configurações.</small>";
 +  return e;
 +}
 +
 +function renderHome(content) {
-+  var recs = picks.slice(0, 6), list = recs.concat(xmas);
-+  content.appendChild(Object.assign(el("div", "label", recs.length ? "RECOMENDADOS PARA VOCÊ" : xmas.length ? "FILMES DE NATAL" : "PARA ASSISTIR"), { style: "left:20px;top:0" }));
-+  var box1 = el("div", "rowbox"); box1.style.cssText = "top:0;height:440px";
++  var recs = recList().slice(0, 8), natal = xmasList(), list = recs.concat(natal);
++  var box1 = el("div", "rowbox"); box1.style.cssText = "top:225px;height:440px";
 +  var tr1 = el("div", "track"); box1.appendChild(tr1);
++  var first = el("div", "label", recs.length ? "RECOMENDADOS PARA VOCÊ" : natal.length ? "FILMES DE NATAL" : "PARA ASSISTIR");
++  first.style.cssText = "left:0;top:12px"; tr1.appendChild(first);
 +  var row1 = [];
-+  if (!list.length) { var k = keyCard(0, 60); tr1.appendChild(k); row1.push(k); }
++  if (!list.length) { var k = keyCard(0, 58); tr1.appendChild(k); row1.push(k); }
 +  list.forEach(function (p, i) {
-+    var x = i * 262, e = poster(p, x);
++    var x = i * 297, e = poster(p, x);
 +    tr1.appendChild(e); row1.push(e);
-+    if (recs.length && i === recs.length) {
-+      var gl = el("div", "grouplabel", "FILMES DE NATAL"); gl.style.left = (x + 12) + "px"; tr1.appendChild(gl);
++    if (recs.length && natal.length && i === recs.length) {
++      var gl = el("div", "label", "FILMES DE NATAL"); gl.style.cssText = "left:" + x + "px;top:12px"; tr1.appendChild(gl);
 +    }
 +  });
 +  content.appendChild(box1);
 +  var cap = el("div", "caption"); cap.id = "caption"; content.appendChild(cap);
 +
-+  content.appendChild(Object.assign(el("div", "label", "MEUS APLICATIVOS"), { style: "left:20px;top:452px" }));
-+  var box2 = el("div", "rowbox"); box2.style.cssText = "top:470px;height:270px";
-+  var tr2 = el("div", "track"); tr2.style.left = "40px"; box2.appendChild(tr2);
++  var al = el("div", "label", "MEUS APLICATIVOS"); al.style.cssText = "left:345px;top:665px;z-index:3"; content.appendChild(al);
++  var box2 = el("div", "rowbox"); box2.style.cssText = "top:676px;height:250px";
++  var tr2 = el("div", "track"); box2.appendChild(tr2);
 +  var row2 = [];
-+  myApps().forEach(function (a, i) { var e = appTile(a, i * 204); tr2.appendChild(e); row2.push(e); });
++  myApps().forEach(function (a, i) { var e = appTile(a, i * 171); tr2.appendChild(e); row2.push(e); });
 +  content.appendChild(box2);
 +  rows = [row1, row2].filter(function (r) { return r.length; });
 +  rowIndex = rows.map(function () { return 0; });
 +}
 +
 +function renderGrid(content, title, cells, cellW, cellH, cols) {
-+  content.appendChild(Object.assign(el("div", "label", title), { style: "left:20px;top:0" }));
-+  var box = el("div", "rowbox"); box.style.cssText = "top:30px;bottom:0";
++  var lb = el("div", "label", title); lb.style.cssText = "left:345px;top:237px"; content.appendChild(lb);
++  var box = el("div", "rowbox"); box.style.cssText = "top:262px;bottom:0";
 +  var tr = el("div", "track"); tr.style.left = "20px"; box.appendChild(tr);
 +  grid = [];
 +  cells.forEach(function (e, i) {
@@ -1351,9 +1366,9 @@ index 0000000..9db4e66
 +  rows = []; grid = [];
 +  if (sec === "home") renderHome(content);
 +  else if (sec === "movies") {
-+    var cells = picks.concat(xmas).map(function (p) { var e = poster(p, 0); e.style.top = "0"; return e; });
++    var cells = recList().concat(xmasList()).map(function (p) { var e = poster(p, 0); e.style.top = "0"; return e; });
 +    if (!cells.length) cells = [keyCard(0, 0)];
-+    renderGrid(content, "FILMES", cells, 262, 400, 6);
++    renderGrid(content, "FILMES", cells, 297, 380, 5);
 +  } else if (sec === "music") {
 +    var m = [];
 +    if (has("com.spotify.tv.android")) {
@@ -1492,6 +1507,7 @@ index 0000000..9db4e66
 +  snowOn = true;
 +  loadItems(); loadPicks(); onWeather();
 +  if (hasKey && !xmas.length) bridge.christmas();
++  bridge.stremio && bridge.stremio();
 +  rerender();
 +};
 +
@@ -1508,7 +1524,9 @@ index 0000000..9db4e66
 +      out.push({ id: "in-1", kind: "input", label: "HDMI 1", symbol: "hdmi", cat: "live", connected: false });
 +      return JSON.stringify(out);
 +    },
-+    hasKey: function () { return true; },
++    hasKey: function () { return false; },
++    stremio: function () { setTimeout(function () { onStremio(JSON.stringify({ top: t.slice(0, 4).map(function (x, i) { return { id: "st-" + i, title: x, poster: "", app: "Stremio" }; }),
++      xmas: t.slice(4).map(function (x, i) { return { id: "sx-" + i, title: x, poster: "", year: "2019" }; }) })); }, 50); },
 +    picks: function () { return JSON.stringify(t.slice(0, 4).map(function (x, i) { return { id: "pick-" + i, title: x, poster: "", app: "Disney+" }; })); },
 +    christmas: function () { setTimeout(function () { onChristmas(JSON.stringify(t.slice(4).map(function (x, i) { return { id: "xmas-" + i, title: x, poster: "", year: "2019" }; }))); }, 50); },
 +    weather: function () { return JSON.stringify({ main: { ok: true, city: "Murici", temp: "26°", icon: "partly_cloudy_night" }, second: { ok: true, city: "Maceió", temp: "27°" } }); },
@@ -1520,9 +1538,10 @@ index 0000000..9db4e66
 +
 +// MARK: - Start
 +
-+paintScene();
-+paintWreath();
-+lights();
++var bg = $("#bg");
++bg.onload = function () { document.body.classList.add("withbg"); };
++bg.onerror = function () { paintScene(); paintWreath(); lights(); };   // no picture on the TV: the painted night
++bg.src = !window.TV && location.hash.indexOf("#bg=") === 0 ? decodeURIComponent(location.hash.slice(4)) : "https://tv.local/bg";
 +startSnow();
 +tick();
 +loadItems();
@@ -1531,6 +1550,7 @@ index 0000000..9db4e66
 +render("home");
 +focusSide(0);
 +if (hasKey) bridge.christmas();
++if (bridge.stremio) bridge.stremio();
 +setInterval(function () { bridge.refresh(); onWeather(); }, 10 * 60000);
 diff --git a/app/src/io/freemytv/DreamView.java b/app/src/io/freemytv/DreamView.java
 index ac2b700..4a824c3 100644
@@ -1589,10 +1609,10 @@ index ac2b700..4a824c3 100644
          if (g == null || glassShader == null || alpha <= 0.004f) return;
 diff --git a/app/src/io/freemytv/GlassHome.java b/app/src/io/freemytv/GlassHome.java
 new file mode 100644
-index 0000000..0365291
+index 0000000..e86ca42
 --- /dev/null
 +++ b/app/src/io/freemytv/GlassHome.java
-@@ -0,0 +1,380 @@
+@@ -0,0 +1,457 @@
 +package io.freemytv;
 +
 +import android.app.Activity;
@@ -1688,6 +1708,14 @@ index 0000000..0365291
 +            @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
 +                Uri u = req.getUrl();
 +                if (!"tv.local".equals(u.getHost()) || u.getPath() == null) return null;
++                if (u.getPath().equals("/bg")) {   // the screen's own background picture, pushed to files/ (natal-bg.jpg)
++                    java.io.File f = new java.io.File(activity.getExternalFilesDir(null), "natal-bg.jpg");
++                    try {
++                        if (f.isFile()) return new WebResourceResponse("image/jpeg", null, new java.io.FileInputStream(f));
++                    } catch (java.io.IOException ignored) {
++                    }
++                    return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", null, null);
++                }
 +                byte[] png = u.getPath().startsWith("/appicon/") ? squareIcon(u.getLastPathSegment())
 +                        : u.getPath().startsWith("/icon/") ? icon(u.getLastPathSegment()) : null;
 +                if (png == null) return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", null, null);
@@ -1802,6 +1830,52 @@ index 0000000..0365291
 +        }
 +        sp.edit().putString("movies", out.toString()).putLong("at", now).apply();
 +        return out.toString();
++    }
++
++    /** Stremio's public catalog (Cinemeta): no key needed. */
++    private static final String CINEMETA = "https://v3-cinemeta.strem.io/catalog/";
++
++    private static JSONArray cinemeta(String path) throws Exception {
++        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(CINEMETA + path).openConnection();
++        c.setConnectTimeout(10000);
++        c.setReadTimeout(10000);
++        try (java.io.InputStream in = c.getInputStream()) {
++            ByteArrayOutputStream out = new ByteArrayOutputStream();
++            byte[] buf = new byte[16384];
++            int n;
++            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
++            return new JSONObject(out.toString("UTF-8")).optJSONArray("metas");
++        } finally {
++            c.disconnect();
++        }
++    }
++
++    /** Popular movies and shows, and Christmas movies, from Stremio's catalog; each opens on its page in Stremio. */
++    private String stremioLists() throws Exception {
++        android.content.SharedPreferences sp = activity.getSharedPreferences("natal", Context.MODE_PRIVATE);
++        long now = System.currentTimeMillis();
++        String saved = sp.getString("stremio", null);
++        if (saved != null && now - sp.getLong("stremioAt", 0) < 6 * 3600_000L) return saved;
++        JSONArray movies = cinemeta("movie/top.json"), shows = cinemeta("series/top.json");
++        JSONArray xmas = cinemeta("movie/top/search=christmas.json");
++        JSONArray top = new JSONArray();
++        for (int i = 0; top.length() < 10 && (movies != null && i < movies.length() || shows != null && i < shows.length()); i++) {
++            if (movies != null && i < movies.length()) addMeta(top, movies.getJSONObject(i), "movie");
++            if (shows != null && i < shows.length() && top.length() < 10) addMeta(top, shows.getJSONObject(i), "series");
++        }
++        JSONArray natal = new JSONArray();
++        for (int i = 0; xmas != null && i < xmas.length() && natal.length() < 16; i++) addMeta(natal, xmas.getJSONObject(i), "movie");
++        String json = new JSONObject().put("top", top).put("xmas", natal).toString();
++        sp.edit().putString("stremio", json).putLong("stremioAt", now).apply();
++        return json;
++    }
++
++    private static void addMeta(JSONArray out, JSONObject m, String type) throws Exception {
++        String id = m.optString("imdb_id", m.optString("id", "")), poster = m.optString("poster", "");
++        if (!id.startsWith("tt") || poster.isEmpty()) return;
++        out.put(new JSONObject().put("id", "st-" + type + "-" + id).put("imdb", id).put("type", type)
++                .put("title", m.optString("name")).put("poster", poster)
++                .put("year", m.optString("releaseInfo", m.optString("year", ""))).put("app", "Stremio"));
 +    }
 +
 +    private static String category(Context c, String pkg) {
@@ -1945,6 +2019,29 @@ index 0000000..0365291
 +                }
 +                final String result = JSONObject.quote(json);
 +                activity.runOnUiThread(() -> web.evaluateJavascript("window.onChristmas && onChristmas(" + result + ")", null));
++            });
++        }
++
++        /** Stremio's lists (no TMDB key needed), handed back to window.onStremio(json). */
++        @JavascriptInterface public void stremio() {
++            io.execute(() -> {
++                String json = "{}";
++                try {
++                    json = stremioLists();
++                    JSONObject o = new JSONObject(json);
++                    for (String list : new String[] {"top", "xmas"}) {
++                        JSONArray a = o.optJSONArray(list);
++                        for (int i = 0; a != null && i < a.length(); i++) {
++                            JSONObject m = a.getJSONObject(i);
++                            items.put(m.getString("id"), HomeApps.app(STREMIO, m.optString("title"),
++                                    "stremio:///detail/" + m.getString("type") + "/" + m.getString("imdb")));
++                        }
++                    }
++                } catch (Exception e) {
++                    AppLog.w("natal: stremio: " + e.getMessage());
++                }
++                final String result = JSONObject.quote(json);
++                activity.runOnUiThread(() -> web.evaluateJavascript("window.onStremio && onStremio(" + result + ")", null));
 +            });
 +        }
 +
