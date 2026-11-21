@@ -961,7 +961,7 @@ index 0000000..31065e5
 +.card.wide small { font-size: 26px; line-height: 1.5; margin-top: 14px; }
 diff --git a/app/assets/natal/natal.js b/app/assets/natal/natal.js
 new file mode 100644
-index 0000000..62dc599
+index 0000000..b2f23af
 --- /dev/null
 +++ b/app/assets/natal/natal.js
 @@ -0,0 +1,587 @@
@@ -1417,12 +1417,12 @@ index 0000000..62dc599
 +
 +/** Keeps the focused item in view: rows scroll sideways, grids up and down. */
 +function scrollTo(e) {
-+  var tr = e.parentNode, view = $("#content").clientWidth - 120;
++  var tr = e.parentNode, box = tr.parentNode;   // the row's own visible area, right of the menu
 +  if (rows.length) {
-+    var x = e.offsetLeft, shift = Math.max(0, x + e.offsetWidth - view);
++    var view = box.clientWidth - 80, x = e.offsetLeft, shift = Math.max(0, x + e.offsetWidth - view);
 +    tr.style.transform = "translateX(" + (-shift) + "px)";
 +  } else {
-+    var y = e.offsetTop, vh = $("#content").clientHeight - 80, sy = Math.max(0, y + e.offsetHeight - vh);
++    var y = e.offsetTop, vh = box.clientHeight - 60, sy = Math.max(0, y + e.offsetHeight - vh);
 +    tr.style.transform = "translateY(" + (-sy) + "px)";
 +  }
 +}
