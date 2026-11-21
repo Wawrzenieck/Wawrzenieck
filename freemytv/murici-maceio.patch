@@ -774,7 +774,7 @@ index 0000000..eca471f
 +</html>
 diff --git a/app/assets/natal/index.html b/app/assets/natal/index.html
 new file mode 100644
-index 0000000..4317692
+index 0000000..4908d7f
 --- /dev/null
 +++ b/app/assets/natal/index.html
 @@ -0,0 +1,86 @@
@@ -847,7 +847,7 @@ index 0000000..4317692
 +  <canvas id="wreath" width="170" height="170"></canvas>
 +  <div id="clock"><div id="time">--:--</div><div id="date"></div></div>
 +  <div id="sep"></div>
-+  <div id="wx"><img id="wxicon" alt=""><div><div id="wxtemp"></div><div id="wxcity"></div></div></div>
++  <div id="wx"><img id="wxicon" alt=""><div><div id="wxtemp"></div><div id="wxcity"></div><div id="wxcond"></div><div id="wxhl"></div></div></div>
 +</header>
 +<div id="corner"><svg class="ci"><use href="#i-wifi"/></svg><svg class="ci f" data-nav="gear"><use href="#i-gear"/></svg></div>
 +
@@ -866,10 +866,10 @@ index 0000000..4317692
 +</html>
 diff --git a/app/assets/natal/natal.css b/app/assets/natal/natal.css
 new file mode 100644
-index 0000000..0ebfc2a
+index 0000000..8fb7ae6
 --- /dev/null
 +++ b/app/assets/natal/natal.css
-@@ -0,0 +1,95 @@
+@@ -0,0 +1,98 @@
 +@font-face { font-family: "Inter"; src: url("../fonts/InterVariable.ttf") format("truetype"); font-weight: 100 900; }
 +
 +* { box-sizing: border-box; margin: 0; padding: 0; }
@@ -964,13 +964,16 @@ index 0000000..0ebfc2a
 +.a .cap { position: absolute; left: -13px; top: -37px; width: 176px; height: 176px; border-radius: 0; z-index: 2; pointer-events: none; }
 +.refwx #wxicon { width: 104px; height: 104px; margin-right: 0; filter: none; }
 +.refwx #wxtemp { display: none; }
-+.refwx #wxcity { font-size: 34px; font-weight: 400; color: #f2f5ff; margin: 0 0 0 16px; letter-spacing: 0.5px; }
++.refwx #wxcity { font-size: 32px; font-weight: 500; color: #f2f5ff; margin: 0 0 0 16px; letter-spacing: 0.5px; line-height: 1.15; }
++#wxcond, #wxhl { display: none; }
++.refwx #wxcond { display: block; font-size: 24px; color: rgba(240, 245, 255, 0.92); margin: 4px 0 0 16px; text-shadow: 0 2px 8px rgba(0, 10, 40, 0.8); }
++.refwx #wxhl { display: block; font-size: 22px; color: #ffe2a0; margin: 4px 0 0 16px; text-shadow: 0 2px 8px rgba(0, 10, 40, 0.8); white-space: nowrap; }
 diff --git a/app/assets/natal/natal.js b/app/assets/natal/natal.js
 new file mode 100644
-index 0000000..c26a9e5
+index 0000000..c995c4b
 --- /dev/null
 +++ b/app/assets/natal/natal.js
-@@ -0,0 +1,599 @@
+@@ -0,0 +1,604 @@
 +/* The Christmas home screen (home_style=natal): a snowy night with a garland, a village and a tree, posters from
 + * Free My TV's recommendations and TMDB's Christmas movies, and the TV's apps wearing Santa hats.
 + * Talks to the app through window.TV (GlassHome.Bridge). */
@@ -1230,7 +1233,12 @@ index 0000000..c26a9e5
 +  var w = {};
 +  try { w = JSON.parse(bridge.weather()); } catch (e) {}
 +  if (!w.main || !w.main.ok) return;
-+  if (wxOk) { $("#wxcity").textContent = w.main.city; return; }   // the reference's picture, and just the city's name
++  if (wxOk) {   // the reference's picture; beside it the city, today's sky and its low and high
++    $("#wxcity").textContent = w.main.city + "/AL";
++    $("#wxcond").textContent = w.main.cond;
++    $("#wxhl").textContent = "Mín. " + w.main.min + "  ·  Máx. " + w.main.max;
++    return;
++  }
 +  $("#wxicon").src = "../symbols/" + w.main.icon + ".png";
 +  $("#wxtemp").textContent = w.main.temp;
 +  $("#wxcity").textContent = w.main.city + (w.second && w.second.ok ? "  ·  " + w.second.city + " " + w.second.temp : "");
