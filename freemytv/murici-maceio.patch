@@ -774,7 +774,7 @@ index 0000000..eca471f
 +</html>
 diff --git a/app/assets/natal/index.html b/app/assets/natal/index.html
 new file mode 100644
-index 0000000..e404683
+index 0000000..4317692
 --- /dev/null
 +++ b/app/assets/natal/index.html
 @@ -0,0 +1,86 @@
@@ -854,9 +854,9 @@ index 0000000..e404683
 +<nav id="side">
 +  <div class="m f" data-sec="home"><svg><use href="#i-home"/></svg><span>Início</span></div>
 +  <div class="m f" data-sec="movies"><svg><use href="#i-film"/></svg><span>Filmes</span></div>
-+  <div class="m f" data-sec="music"><svg><use href="#i-music"/></svg><svg class="mhat" style="left:104px;top:-6px"><use href="#hat"/></svg><span>Músicas</span></div>
++  <div class="m f" data-sec="music"><svg><use href="#i-music"/></svg><img class="mhat" src="hat.png" alt="" style="left:112px;top:2px"><span>Músicas</span></div>
 +  <div class="m f" data-sec="settings"><svg><use href="#i-gear"/></svg><span>Configurações</span></div>
-+  <div class="m f" data-sec="search"><svg><use href="#i-search"/></svg><svg class="mhat" style="left:92px;top:-16px"><use href="#hat"/></svg><span>Pesquisar</span></div>
++  <div class="m f" data-sec="search"><svg><use href="#i-search"/></svg><img class="mhat" src="hat.png" alt="" style="left:102px;top:-8px"><span>Pesquisar</span></div>
 +</nav>
 +
 +<main id="content"></main>
@@ -866,10 +866,10 @@ index 0000000..e404683
 +</html>
 diff --git a/app/assets/natal/natal.css b/app/assets/natal/natal.css
 new file mode 100644
-index 0000000..31065e5
+index 0000000..7025234
 --- /dev/null
 +++ b/app/assets/natal/natal.css
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,94 @@
 +@font-face { font-family: "Inter"; src: url("../fonts/InterVariable.ttf") format("truetype"); font-weight: 100 900; }
 +
 +* { box-sizing: border-box; margin: 0; padding: 0; }
@@ -912,7 +912,7 @@ index 0000000..31065e5
 +.m:nth-child(4) { top: 722px; } .m:nth-child(5) { top: 872px; }
 +.m svg { width: 86px; height: 86px; margin-bottom: 6px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)); }
 +.withbg .m > svg:first-child, .withbg .m span { visibility: hidden; }
-+.m .mhat { position: absolute; width: 82px; height: 68px; transform: rotate(12deg); margin: 0; visibility: visible !important; }
++.m .mhat { position: absolute; width: 78px; height: 77px; margin: 0; visibility: visible !important; }
 +.m.current::before { content: ""; position: absolute; left: -14px; top: 40px; width: 6px; height: 70px; border-radius: 3px; background: #ffd24a;
 +  box-shadow: 0 0 12px rgba(255, 210, 74, 0.8); }
 +.m.focused { background: rgba(255, 255, 255, 0.13); box-shadow: 0 0 0 3px rgba(255, 224, 138, 0.9), 0 0 30px rgba(255, 205, 90, 0.45); }
@@ -959,12 +959,17 @@ index 0000000..31065e5
 +#toast.on { opacity: 1; transform: translate(-50%, 0); }
 +.card.wide { width: 1100px; height: 322px; align-items: flex-start; text-align: left; padding: 0 54px; font-size: 34px; }
 +.card.wide small { font-size: 26px; line-height: 1.5; margin-top: 14px; }
++
++/* The reference's own pictures (on the TV): the snow-capped hat on each app, and the weather icon with no text. */
++.a .cap { position: absolute; left: -13px; top: -37px; width: 176px; height: 176px; border-radius: 0; z-index: 2; pointer-events: none; }
++.refwx #wxicon { width: 104px; height: 104px; margin-right: 0; filter: none; }
++.refwx #wxtemp, .refwx #wxcity { display: none; }
 diff --git a/app/assets/natal/natal.js b/app/assets/natal/natal.js
 new file mode 100644
-index 0000000..b2f23af
+index 0000000..67a0cbe
 --- /dev/null
 +++ b/app/assets/natal/natal.js
-@@ -0,0 +1,587 @@
+@@ -0,0 +1,599 @@
 +/* The Christmas home screen (home_style=natal): a snowy night with a garland, a village and a tree, posters from
 + * Free My TV's recommendations and TMDB's Christmas movies, and the TV's apps wearing Santa hats.
 + * Talks to the app through window.TV (GlassHome.Bridge). */
@@ -1224,6 +1229,7 @@ index 0000000..b2f23af
 +  var w = {};
 +  try { w = JSON.parse(bridge.weather()); } catch (e) {}
 +  if (!w.main || !w.main.ok) return;
++  if (wxOk) return;   // the reference's own weather picture is in place
 +  $("#wxicon").src = "../symbols/" + w.main.icon + ".png";
 +  $("#wxtemp").textContent = w.main.temp;
 +  $("#wxcity").textContent = w.main.city + (w.second && w.second.ok ? "  ·  " + w.second.city + " " + w.second.temp : "");
@@ -1232,9 +1238,11 @@ index 0000000..b2f23af
 +// MARK: - Data
 +
 +var items = [], picks = [], xmas = [], hasKey = false, stTop = [], stXmas = [];
-+var APP_ORDER = ["com.world.youcinetv", "org.smarttube.stable", "com.stremio.one", "com.globo.globotv", "com.disney.disneyplus",
-+  "com.netflix.ninja", "com.amazon.amazonvideo.livingroom", "com.spotify.tv.android", "com.google.android.youtube.tv", "com.ilv.vradio"];
++/** "Meus aplicativos": seven, as in the reference (the rest are under Configurações › Outros apps). */
++var APP_ORDER = ["com.world.youcinetv", "com.google.android.youtube.tv", "com.stremio.one", "com.disney.disneyplus",
++  "org.smarttube.stable", "com.globo.globotv", "com.spotify.tv.android", "com.netflix.ninja", "com.amazon.amazonvideo.livingroom"];
 +var HIDE = ["io.freemytv"];
++var CAP = "cap.png", capOk = true;   // the reference's snow cap and Santa hat (taken from its own pixels)
 +
 +function loadItems() { try { items = JSON.parse(bridge.items()); } catch (e) { items = []; } }
 +function loadPicks() {
@@ -1242,13 +1250,13 @@ index 0000000..b2f23af
 +  try { picks = JSON.parse(bridge.picks("")); } catch (e) { picks = []; }
 +}
 +function myApps() {
-+  var apps = items.filter(function (it) { return it.kind === "app" && !it.system && HIDE.indexOf(it.pkg) < 0; });
-+  apps.sort(function (a, b) {
-+    var ia = APP_ORDER.indexOf(a.pkg), ib = APP_ORDER.indexOf(b.pkg);
-+    ia = ia < 0 ? 99 : ia; ib = ib < 0 ? 99 : ib;
-+    return ia - ib || a.label.localeCompare(b.label, "pt");
-+  });
-+  return apps;
++  return APP_ORDER.map(function (p) { return items.filter(function (it) { return it.kind === "app" && it.pkg === p; })[0]; })
++    .filter(Boolean).slice(0, 7);
++}
++function otherApps() {
++  var mine = myApps().map(function (a) { return a.pkg; });
++  return items.filter(function (it) { return it.kind === "app" && !it.system && HIDE.indexOf(it.pkg) < 0 && mine.indexOf(it.pkg) < 0; })
++    .sort(function (a, b) { return a.label.localeCompare(b.label, "pt"); });
 +}
 +window.onChristmas = function (json) {
 +  try { xmas = JSON.parse(json); } catch (e) { xmas = []; }
@@ -1292,7 +1300,9 @@ index 0000000..b2f23af
 +  e.style.left = x + "px";
 +  var img = el("img"); img.src = "https://tv.local/appicon/" + encodeURIComponent(a.pkg);
 +  e.appendChild(img);
-+  e.insertAdjacentHTML("beforeend", '<svg class="hat"><use href="#hat"/></svg>');
++  // The reference's snow cap and Santa hat (files/natal-cap.png); without it, the drawn hat.
++  if (capOk) { var cap = el("img", "cap"); cap.src = CAP; e.appendChild(cap); }
++  else e.insertAdjacentHTML("beforeend", '<svg class="hat"><use href="#hat"/></svg>');
 +  return e;
 +}
 +
@@ -1385,6 +1395,7 @@ index 0000000..b2f23af
 +    items.filter(function (it) { return it.kind === "live" || it.kind === "input"; }).forEach(function (it) {
 +      s.push(card(it.label, it.kind === "live" ? "Canais da antena" : it.connected === false ? "Sem sinal" : "Entrada", "id:" + it.id, "../symbols/" + (it.kind === "live" ? "live_tv" : "hdmi") + ".png"));
 +    });
++    otherApps().forEach(function (a) { s.push(card(a.label, "Outros apps", "id:" + a.id, "https://tv.local/appicon/" + encodeURIComponent(a.pkg))); });
 +    renderGrid(content, "CONFIGURAÇÕES", s, 440, 270, 3);
 +  }
 +}
@@ -1538,6 +1549,12 @@ index 0000000..b2f23af
 +
 +// MARK: - Start
 +
++var wxOk = false;
++(function () {   // the reference's pictures, when they're on the TV: the snow-capped hat and the weather icon
++  var wx = new Image();
++  wx.onload = function () { wxOk = true; document.body.classList.add("refwx"); $("#wxicon").src = wx.src; };
++  wx.src = "https://tv.local/file/natal-weather.png";
++})();
 +var bg = $("#bg");
 +bg.onload = function () { document.body.classList.add("withbg"); };
 +bg.onerror = function () { paintScene(); paintWreath(); lights(); };   // no picture on the TV: the painted night
@@ -1609,10 +1626,10 @@ index ac2b700..4a824c3 100644
          if (g == null || glassShader == null || alpha <= 0.004f) return;
 diff --git a/app/src/io/freemytv/GlassHome.java b/app/src/io/freemytv/GlassHome.java
 new file mode 100644
-index 0000000..e86ca42
+index 0000000..9c74743
 --- /dev/null
 +++ b/app/src/io/freemytv/GlassHome.java
-@@ -0,0 +1,457 @@
+@@ -0,0 +1,459 @@
 +package io.freemytv;
 +
 +import android.app.Activity;
@@ -1708,10 +1725,12 @@ index 0000000..e86ca42
 +            @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
 +                Uri u = req.getUrl();
 +                if (!"tv.local".equals(u.getHost()) || u.getPath() == null) return null;
-+                if (u.getPath().equals("/bg")) {   // the screen's own background picture, pushed to files/ (natal-bg.jpg)
-+                    java.io.File f = new java.io.File(activity.getExternalFilesDir(null), "natal-bg.jpg");
++                String file = u.getPath().equals("/bg") ? "natal-bg.jpg"
++                        : u.getPath().startsWith("/file/") ? u.getLastPathSegment() : null;
++                if (file != null && file.matches("natal-[a-z0-9-]+\\.(png|jpg)")) {   // the screen's own pictures, pushed to files/
++                    java.io.File f = new java.io.File(activity.getExternalFilesDir(null), file);
 +                    try {
-+                        if (f.isFile()) return new WebResourceResponse("image/jpeg", null, new java.io.FileInputStream(f));
++                        if (f.isFile()) return new WebResourceResponse(file.endsWith(".png") ? "image/png" : "image/jpeg", null, new java.io.FileInputStream(f));
 +                    } catch (java.io.IOException ignored) {
 +                    }
 +                    return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", null, null);

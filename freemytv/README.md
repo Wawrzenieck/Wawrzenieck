@@ -9,7 +9,7 @@ Versão personalizada do [Free My TV](https://github.com/simbasjungles/free-my-t
   na tela inicial, no cartão de clima da gaveta e na tela de descanso.
 - `config.properties`: configurações usadas no build (sem nenhuma chave).
 - `murici-maceio.patch`: as mudanças no código, aplicáveis com `git apply` sobre o commit acima.
-- `FreeMyTV.apk`: o app compilado (SHA-256 `000e58152ccb033eb48110c7d8468ab8f056d0f0e2c312b2f7f219e550d40939`).
+- `FreeMyTV.apk`: o app compilado (SHA-256 `f9347b35126e95141772d7ec7a54151e3e2575023ef974f8d249dac0ddc179f3`).
 
 Assinado com uma chave própria (não a do projeto): atualizações automáticas da versão oficial
 não se aplicam; para atualizar, refaça o build com o patch e a mesma chave.
