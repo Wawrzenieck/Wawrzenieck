@@ -956,7 +956,7 @@ index 0000000..b8621c2
 +#toast.on { opacity: 1; transform: translate(-50%, 0); }
 diff --git a/app/assets/natal/natal.js b/app/assets/natal/natal.js
 new file mode 100644
-index 0000000..a74bbcb
+index 0000000..9db4e66
 --- /dev/null
 +++ b/app/assets/natal/natal.js
 @@ -0,0 +1,572 @@
@@ -1296,7 +1296,7 @@ index 0000000..a74bbcb
 +  var box1 = el("div", "rowbox"); box1.style.cssText = "top:0;height:440px";
 +  var tr1 = el("div", "track"); box1.appendChild(tr1);
 +  var row1 = [];
-+  if (!list.length) { var k = keyCard(0, 40); tr1.appendChild(k); row1.push(k); }
++  if (!list.length) { var k = keyCard(0, 60); tr1.appendChild(k); row1.push(k); }
 +  list.forEach(function (p, i) {
 +    var x = i * 262, e = poster(p, x);
 +    tr1.appendChild(e); row1.push(e);
