@@ -772,6 +772,766 @@ index 0000000..eca471f
 +<script src="glass.js"></script>
 +</body>
 +</html>
+diff --git a/app/assets/natal/index.html b/app/assets/natal/index.html
+new file mode 100644
+index 0000000..a29ad71
+--- /dev/null
++++ b/app/assets/natal/index.html
+@@ -0,0 +1,85 @@
++<!doctype html>
++<html lang="pt-BR">
++<head>
++<meta charset="utf-8">
++<meta name="viewport" content="width=1920, user-scalable=no">
++<title>Natal</title>
++<link rel="stylesheet" href="natal.css">
++</head>
++<body>
++<canvas id="scene" width="1920" height="1080"></canvas>
++<div id="twinkles"></div>
++<canvas id="snow" width="1920" height="1080"></canvas>
++
++<svg width="0" height="0" style="position:absolute">
++  <defs>
++    <!-- A Santa hat: red cone, white fur band, pompom. -->
++    <symbol id="hat" viewBox="0 0 120 100">
++      <path d="M14 70 C 30 30, 62 6, 92 14 C 104 18, 110 30, 106 46 L 96 44 C 96 34, 88 28, 78 32 C 62 40, 54 58, 50 72 Z" fill="#d0141e"/>
++      <path d="M14 70 C 30 30, 62 6, 92 14 C 80 16, 60 30, 44 66 Z" fill="#ff3b3b" opacity="0.35"/>
++      <rect x="6" y="64" width="64" height="22" rx="11" fill="#fbfbfb"/>
++      <rect x="6" y="64" width="64" height="8" rx="4" fill="#ffffff"/>
++      <circle cx="104" cy="50" r="12" fill="#ffffff"/>
++      <circle cx="100" cy="46" r="4" fill="#ffffff"/>
++    </symbol>
++    <symbol id="i-home" viewBox="0 0 100 100">
++      <rect x="22" y="46" width="56" height="42" rx="4" fill="#f1d3a6"/>
++      <rect x="22" y="80" width="56" height="8" fill="#d9b382"/>
++      <path d="M10 52 L50 16 L90 52 L82 58 L50 30 L18 58 Z" fill="#c23a2b"/>
++      <path d="M8 50 L50 12 L92 50 L88 56 C 74 44, 64 34, 50 26 C 36 34, 26 44, 12 56 Z" fill="#ffffff"/>
++      <rect x="64" y="20" width="10" height="18" fill="#8a4b2d"/><rect x="62" y="16" width="14" height="6" rx="3" fill="#ffffff"/>
++      <rect x="30" y="56" width="16" height="14" rx="2" fill="#ffd36b"/><rect x="37" y="56" width="2" height="14" fill="#c98b2a"/><rect x="30" y="62" width="16" height="2" fill="#c98b2a"/>
++      <rect x="54" y="60" width="14" height="28" rx="2" fill="#7a3b22"/><circle cx="65" cy="75" r="1.6" fill="#ffd36b"/>
++    </symbol>
++    <symbol id="i-film" viewBox="0 0 100 100">
++      <rect x="14" y="40" width="72" height="46" rx="6" fill="#3b3f4a"/>
++      <rect x="14" y="40" width="72" height="10" fill="#22252c"/>
++      <path d="M12 26 L84 14 L86 26 L14 38 Z" fill="#2a2d34"/>
++      <path d="M22 24 L30 36 M38 21 L46 33 M54 18 L62 30 M70 16 L78 28" stroke="#ffffff" stroke-width="5"/>
++      <path d="M50 58 C 38 50, 30 56, 34 64 C 38 70, 48 66, 50 62 C 52 66, 62 70, 66 64 C 70 56, 62 50, 50 58 Z" fill="#e0202a"/>
++      <path d="M50 62 L42 80 M50 62 L58 80" stroke="#e0202a" stroke-width="6" stroke-linecap="round"/>
++      <circle cx="50" cy="61" r="5" fill="#b0101a"/>
++    </symbol>
++    <symbol id="i-music" viewBox="0 0 100 100">
++      <path d="M40 26 L78 18 L78 66" stroke="#dfe6f3" stroke-width="7" fill="none"/>
++      <path d="M40 26 L40 74" stroke="#dfe6f3" stroke-width="7"/>
++      <ellipse cx="31" cy="76" rx="11" ry="9" fill="#dfe6f3"/><ellipse cx="69" cy="68" rx="11" ry="9" fill="#dfe6f3"/>
++      <path d="M6 44 h20 M10 54 h14 M6 64 h18" stroke="#9fb0cc" stroke-width="4" stroke-linecap="round"/>
++    </symbol>
++    <symbol id="i-gear" viewBox="0 0 100 100">
++      <path d="M50 18 l7 0 2 9 a24 24 0 0 1 7 4 l9 -3 5 6 -5 8 a24 24 0 0 1 2 8 l9 3 0 8 -9 3 a24 24 0 0 1 -2 8 l5 8 -5 6 -9 -3 a24 24 0 0 1 -7 4 l-2 9 -7 0 -7 0 -2 -9 a24 24 0 0 1 -7 -4 l-9 3 -5 -6 5 -8 a24 24 0 0 1 -2 -8 l-9 -3 0 -8 9 -3 a24 24 0 0 1 2 -8 l-5 -8 5 -6 9 3 a24 24 0 0 1 7 -4 l2 -9 z"
++        fill="none" stroke="#dfe6f3" stroke-width="5" stroke-linejoin="round"/>
++      <circle cx="50" cy="54" r="11" fill="none" stroke="#dfe6f3" stroke-width="5"/>
++    </symbol>
++    <symbol id="i-search" viewBox="0 0 100 100">
++      <circle cx="42" cy="54" r="22" fill="none" stroke="#dfe6f3" stroke-width="8"/>
++      <path d="M58 70 L80 92" stroke="#dfe6f3" stroke-width="11" stroke-linecap="round"/>
++    </symbol>
++    <symbol id="i-wifi" viewBox="0 0 100 100">
++      <path d="M12 42 C 34 20, 66 20, 88 42 M24 56 C 40 40, 60 40, 76 56 M36 70 C 44 62, 56 62, 64 70" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
++      <circle cx="50" cy="82" r="6" fill="#ffffff"/>
++    </symbol>
++  </defs>
++</svg>
++
++<header id="head">
++  <canvas id="wreath" width="170" height="170"></canvas>
++  <div id="clock"><div id="time">--:--</div><div id="date"></div></div>
++  <div id="sep"></div>
++  <div id="wx"><img id="wxicon" alt=""><div><div id="wxtemp"></div><div id="wxcity"></div></div></div>
++</header>
++<div id="corner"><svg class="ci"><use href="#i-wifi"/></svg><svg class="ci f" data-nav="gear"><use href="#i-gear"/></svg></div>
++
++<nav id="side">
++  <div class="m f" data-sec="home"><svg><use href="#i-home"/></svg><span>Início</span></div>
++  <div class="m f" data-sec="movies"><svg><use href="#i-film"/></svg><span>Filmes</span></div>
++  <div class="m f" data-sec="music"><svg><use href="#i-music"/></svg><svg class="mhat"><use href="#hat"/></svg><span>Músicas</span></div>
++  <div class="m f" data-sec="settings"><svg><use href="#i-gear"/></svg><span>Configurações</span></div>
++  <div class="m f" data-sec="search"><svg><use href="#i-search"/></svg><svg class="mhat"><use href="#hat"/></svg><span>Pesquisar</span></div>
++</nav>
++
++<main id="content"></main>
++<div id="toast"></div>
++<script src="natal.js"></script>
++</body>
++</html>
+diff --git a/app/assets/natal/natal.css b/app/assets/natal/natal.css
+new file mode 100644
+index 0000000..b8621c2
+--- /dev/null
++++ b/app/assets/natal/natal.css
+@@ -0,0 +1,85 @@
++@font-face { font-family: "Inter"; src: url("../fonts/InterVariable.ttf") format("truetype"); font-weight: 100 900; }
++
++* { box-sizing: border-box; margin: 0; padding: 0; }
++*:focus { outline: none; }
++html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0a1630; color: #fff;
++  font-family: "Inter", sans-serif; cursor: none; user-select: none; -webkit-font-smoothing: antialiased; }
++
++#scene, #snow { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; }
++#snow { z-index: 1; pointer-events: none; }
++#twinkles { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 1; pointer-events: none; }
++#twinkles span { position: absolute; border-radius: 50%; animation: tw 2.6s ease-in-out infinite; }
++@keyframes tw { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
++
++/* MARK: - Header: wreath, clock, weather */
++#head { position: absolute; left: 50px; top: 95px; height: 170px; display: flex; align-items: center; z-index: 3; }
++#wreath { width: 170px; height: 170px; margin-right: 24px; }
++#time { font-size: 104px; font-weight: 500; letter-spacing: -2px; line-height: 1; text-shadow: 0 4px 24px rgba(0, 10, 40, 0.6); }
++#date { font-size: 30px; font-weight: 500; margin-top: 12px; letter-spacing: 1px; color: #eef3ff; }
++#sep { width: 2px; height: 110px; margin: 0 36px; background: rgba(255, 255, 255, 0.35); }
++#wx { display: flex; align-items: center; }
++#wxicon { width: 96px; height: 96px; margin-right: 18px; filter: drop-shadow(0 4px 14px rgba(0, 20, 60, 0.6)); }
++#wxtemp { font-size: 54px; font-weight: 500; line-height: 1; }
++#wxcity { font-size: 22px; color: rgba(235, 242, 255, 0.85); margin-top: 8px; white-space: nowrap; }
++
++#corner { position: absolute; right: 150px; top: 140px; z-index: 3; display: flex; }
++#corner .ci { width: 62px; height: 62px; margin-left: 36px; filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.5)); }
++
++/* MARK: - Side menu */
++#side { position: absolute; left: 0; top: 300px; width: 290px; bottom: 0; z-index: 3; padding-top: 34px;
++  background: linear-gradient(90deg, rgba(10, 20, 44, 0.92), rgba(12, 24, 52, 0.82));
++  border-top-right-radius: 36px; box-shadow: 10px 0 40px rgba(0, 0, 0, 0.35); }
++.m { position: relative; width: 230px; height: 140px; margin: 0 auto 6px; border-radius: 26px;
++  display: flex; flex-direction: column; align-items: center; justify-content: center;
++  color: rgba(230, 238, 255, 0.72); font-size: 26px; font-weight: 500;
++  transition: background 0.12s, color 0.12s, transform 0.12s; }
++.m svg { width: 82px; height: 82px; margin-bottom: 8px; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4)); }
++.m .mhat { position: absolute; width: 64px; height: 54px; left: 112px; top: 8px; transform: rotate(14deg); margin: 0; }
++.m.current { color: #fff; }
++.m.current::before { content: ""; position: absolute; left: -26px; top: 36px; width: 6px; height: 68px; border-radius: 3px; background: #ffd24a; }
++.m.focused { background: rgba(255, 255, 255, 0.16); color: #fff; transform: scale(1.05); }
++
++/* MARK: - Content */
++#content { position: absolute; left: 330px; right: 0; top: 280px; bottom: 0; z-index: 2; overflow: hidden; }
++.label { position: absolute; font-size: 30px; font-weight: 600; letter-spacing: 1.5px; color: #eef3ff;
++  text-shadow: 0 2px 12px rgba(0, 10, 40, 0.8); white-space: nowrap; }
++.rowbox { position: absolute; left: 0; right: 0; overflow: hidden; }
++.track { position: absolute; left: 20px; top: 0; height: 100%; will-change: transform; transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
++
++/* Posters: a gold frame; focused, it grows and glows (the glow is a ::after that only fades). */
++.p { position: absolute; top: 56px; width: 230px; height: 330px; border-radius: 16px; background: #13254a;
++  border: 4px solid #d9b45a; box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5); will-change: transform; transition: transform 0.14s ease-out; }
++.p img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
++.p .t { position: absolute; left: 14px; right: 14px; top: 40%; text-align: center; font-size: 26px; font-weight: 700; color: #ffe7b0; }
++.p::after, .a::after, .card::after { content: ""; position: absolute; left: -8px; top: -8px; right: -8px; bottom: -8px; border-radius: 22px;
++  border: 4px solid #ffe08a; box-shadow: 0 0 34px 10px rgba(255, 205, 90, 0.75); opacity: 0; transition: opacity 0.14s ease-out; pointer-events: none; }
++.p.focused { transform: scale(1.07); z-index: 2; }
++.p.focused::after, .a.focused::after, .card.focused::after { opacity: 1; }
++.grouplabel { position: absolute; top: 0; font-size: 30px; font-weight: 600; letter-spacing: 1.5px; color: #eef3ff;
++  text-shadow: 0 2px 12px rgba(0, 10, 40, 0.8); white-space: nowrap; }
++.caption { position: absolute; left: 20px; top: 384px; font-size: 24px; color: rgba(240, 245, 255, 0.85); white-space: nowrap;
++  text-shadow: 0 2px 10px rgba(0, 10, 40, 0.9); }
++
++/* Apps: rounded icons wearing Santa hats. */
++.a { position: absolute; top: 46px; width: 150px; height: 150px; border-radius: 34px; background: #fff;
++  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5); will-change: transform; transition: transform 0.14s ease-out; }
++.a img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 34px; }
++.a .hat { position: absolute; width: 104px; height: 86px; right: -26px; top: -48px; transform: rotate(16deg); z-index: 2;
++  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35)); }
++.a.focused { transform: scale(1.12); z-index: 2; }
++.a::after { border-radius: 40px; }
++
++/* Cards (other sections). */
++.card { position: absolute; width: 400px; height: 220px; border-radius: 26px; display: flex; flex-direction: column; align-items: center;
++  justify-content: center; background: linear-gradient(150deg, rgba(40, 64, 120, 0.85), rgba(16, 30, 64, 0.9));
++  border: 2px solid rgba(217, 180, 90, 0.7); box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
++  font-size: 28px; font-weight: 600; text-align: center; padding: 0 20px; will-change: transform; transition: transform 0.14s ease-out; }
++.card img { width: 86px; height: 86px; margin-bottom: 16px; border-radius: 20px; }
++.card small { display: block; font-size: 21px; font-weight: 400; color: rgba(235, 242, 255, 0.75); margin-top: 8px; }
++.card.focused { transform: scale(1.06); z-index: 2; }
++.card.wide { width: 1100px; height: 330px; align-items: flex-start; text-align: left; padding: 0 54px; font-size: 34px; }
++.card.wide small { font-size: 26px; line-height: 1.5; margin-top: 14px; }
++
++#toast { position: absolute; left: 50%; bottom: 40px; z-index: 9; transform: translate(-50%, 30px); padding: 16px 30px; border-radius: 40px;
++  background: rgba(10, 20, 44, 0.85); border: 2px solid rgba(217, 180, 90, 0.6); font-size: 24px; opacity: 0; transition: opacity 0.25s, transform 0.25s; }
++#toast.on { opacity: 1; transform: translate(-50%, 0); }
+diff --git a/app/assets/natal/natal.js b/app/assets/natal/natal.js
+new file mode 100644
+index 0000000..a74bbcb
+--- /dev/null
++++ b/app/assets/natal/natal.js
+@@ -0,0 +1,572 @@
++/* The Christmas home screen (home_style=natal): a snowy night with a garland, a village and a tree, posters from
++ * Free My TV's recommendations and TMDB's Christmas movies, and the TV's apps wearing Santa hats.
++ * Talks to the app through window.TV (GlassHome.Bridge). */
++"use strict";
++
++var W = 1920, H = 1080;
++var bridge = window.TV || mockBridge();
++function $(s) { return document.querySelector(s); }
++function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
++function rng(seed) { return function () { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
++
++// MARK: - The scene (painted once, then kept)
++
++var SCENE_KEY = "sala-scene-v3";
++
++function paintScene() {
++  var c = $("#scene").getContext("2d");
++  try {
++    var saved = localStorage.getItem(SCENE_KEY);
++    if (saved) { var im = new Image(); im.onload = function () { c.drawImage(im, 0, 0); }; im.src = saved; return; }
++  } catch (e) {}
++  drawScene(c);
++  try { localStorage.setItem(SCENE_KEY, $("#scene").toDataURL("image/jpeg", 0.9)); } catch (e) {}
++}
++
++function needle(c, x, y, len, ang, r) {
++  c.save(); c.translate(x, y); c.rotate(ang);
++  c.strokeStyle = "#3a2410"; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 0); c.lineTo(len, 0); c.stroke();
++  for (var i = 4; i < len; i += 5) {
++    c.strokeStyle = ["#1d5a2e", "#2a7a3e", "#164a26", "#3a8f4c"][Math.floor(r() * 4)];
++    c.lineWidth = 2.6;
++    var n = 12 + r() * 10;
++    c.beginPath(); c.moveTo(i, 0); c.lineTo(i + n * 0.55, -n); c.moveTo(i, 0); c.lineTo(i + n * 0.55, n); c.stroke();
++  }
++  c.restore();
++}
++
++function cone(c, x, y, s, ang) {   // a pine cone hanging down: an egg of overlapping scales, lit from the left
++  c.save(); c.translate(x, y); c.rotate(ang);
++  var rx = s * 0.36, ry = s * 0.6;
++  var body = c.createRadialGradient(-rx * 0.4, ry * 0.2, 2, 0, ry * 0.4, ry * 1.1);
++  body.addColorStop(0, "#8a5530"); body.addColorStop(1, "#2e1a0a");
++  c.fillStyle = body; c.beginPath(); c.ellipse(0, ry * 0.45, rx, ry, 0, 0, Math.PI * 2); c.fill();
++  for (var row = 0; row < 8; row++) {
++    var yy = row * ry * 0.24 - ry * 0.25, w = rx * Math.sqrt(Math.max(0.08, 1 - Math.pow((yy - ry * 0.45) / ry, 2)));
++    for (var k = -2; k <= 2; k++) {
++      var sx = k * w * 0.42 + (row % 2 ? w * 0.21 : 0);
++      if (Math.abs(sx) > w * 0.95) continue;
++      var g = c.createLinearGradient(sx, yy - 6, sx, yy + 10);
++      g.addColorStop(0, "#b07a45"); g.addColorStop(1, "#5a3416");
++      c.fillStyle = g;
++      c.beginPath(); c.moveTo(sx - w * 0.24, yy); c.quadraticCurveTo(sx, yy + s * 0.2, sx + w * 0.24, yy); c.closePath(); c.fill();
++    }
++  }
++  c.strokeStyle = "#3a2410"; c.lineWidth = 3; c.beginPath(); c.moveTo(0, -ry * 0.25); c.lineTo(0, -ry * 0.55); c.stroke();
++  c.restore();
++}
++
++function house(c, x, base, w, h, r) {
++  var roofH = h * 0.55;
++  c.fillStyle = r() < 0.5 ? "#3a2c3e" : "#2c3550";
++  c.fillRect(x, base - h, w, h);
++  c.fillStyle = "#4a3a52";
++  c.beginPath(); c.moveTo(x - 12, base - h); c.lineTo(x + w / 2, base - h - roofH); c.lineTo(x + w + 12, base - h); c.closePath(); c.fill();
++  c.fillStyle = "#f4f8ff";   // snow on the roof
++  c.beginPath(); c.moveTo(x - 16, base - h + 4); c.lineTo(x + w / 2, base - h - roofH - 6); c.lineTo(x + w + 16, base - h + 4);
++  c.lineTo(x + w + 6, base - h + 10); c.lineTo(x + w / 2, base - h - roofH + 10); c.lineTo(x - 6, base - h + 10); c.closePath(); c.fill();
++  var cols = Math.max(1, Math.floor(w / 34)), rows = h > 70 ? 2 : 1;
++  for (var i = 0; i < cols; i++) for (var j = 0; j < rows; j++) {
++    var wx = x + 10 + i * (w - 20) / cols + 4, wy = base - h + 14 + j * 34;
++    var glow = c.createRadialGradient(wx + 8, wy + 9, 2, wx + 8, wy + 9, 30);
++    glow.addColorStop(0, "rgba(255,200,100,0.55)"); glow.addColorStop(1, "rgba(255,200,100,0)");
++    c.fillStyle = glow; c.fillRect(wx - 22, wy - 22, 60, 62);
++    c.fillStyle = "#ffcf6e"; c.fillRect(wx, wy, 16, 18);
++    c.fillStyle = "#c98a2a"; c.fillRect(wx + 7, wy, 2, 18); c.fillRect(wx, wy + 8, 16, 2);
++  }
++}
++
++function drawScene(c) {
++  var r = rng(2412);
++  // Night sky.
++  var g = c.createLinearGradient(0, 0, 0, H);
++  g.addColorStop(0, "#081430"); g.addColorStop(0.45, "#10265a"); g.addColorStop(0.78, "#1b3a78"); g.addColorStop(1, "#24467f");
++  c.fillStyle = g; c.fillRect(0, 0, W, H);
++  // Stars.
++  for (var s = 0; s < 220; s++) {
++    c.fillStyle = "rgba(255,255,255," + (0.2 + r() * 0.6).toFixed(2) + ")";
++    var sz = r() < 0.1 ? 2.4 : 1.4;
++    c.fillRect(r() * W, r() * H * 0.75, sz, sz);
++  }
++  // Warm bokeh near the top (out-of-focus lights).
++  for (var b = 0; b < 46; b++) {
++    var bx = r() * W, by = r() * 330, br = 16 + r() * 40, a = 0.25 + r() * 0.45;
++    var bg = c.createRadialGradient(bx, by, 0, bx, by, br);
++    bg.addColorStop(0, "rgba(255,214,130," + a.toFixed(2) + ")"); bg.addColorStop(0.75, "rgba(255,200,110," + (a * 0.6).toFixed(2) + ")");
++    bg.addColorStop(1, "rgba(255,200,110,0)");
++    c.fillStyle = bg; c.beginPath(); c.arc(bx, by, br, 0, Math.PI * 2); c.fill();
++  }
++  // Snowy hills and the far pines.
++  c.fillStyle = "#c9d6ee";
++  c.beginPath(); c.moveTo(0, 900);
++  for (var x = 0; x <= W; x += 160) c.quadraticCurveTo(x + 80, 860 + r() * 30, x + 160, 890 + r() * 20);
++  c.lineTo(W, H); c.lineTo(0, H); c.closePath(); c.fill();
++  for (var p = 0; p < 26; p++) {
++    var px = 380 + r() * 1200, ph = 50 + r() * 60, pb = 890 + r() * 30;
++    c.fillStyle = "#18305a";
++    c.beginPath(); c.moveTo(px - ph * 0.3, pb); c.lineTo(px, pb - ph); c.lineTo(px + ph * 0.3, pb); c.closePath(); c.fill();
++    c.fillStyle = "rgba(235,242,255,0.8)";
++    c.beginPath(); c.moveTo(px - ph * 0.12, pb - ph * 0.6); c.lineTo(px, pb - ph); c.lineTo(px + ph * 0.12, pb - ph * 0.6); c.closePath(); c.fill();
++  }
++  // The village.
++  var hx = 430;
++  while (hx < 1480) {
++    var w = 90 + r() * 80, hh = 60 + r() * 50;
++    house(c, hx, 1000 + r() * 20, w, hh, r);
++    hx += w + 30 + r() * 40;
++  }
++  // A church tower in the middle.
++  c.fillStyle = "#33405e"; c.fillRect(1040, 820, 50, 150);
++  c.fillStyle = "#f4f8ff"; c.beginPath(); c.moveTo(1030, 822); c.lineTo(1065, 760); c.lineTo(1100, 822); c.closePath(); c.fill();
++  c.fillStyle = "#ffcf6e"; c.beginPath(); c.arc(1065, 850, 10, 0, Math.PI * 2); c.fill();
++  // Snow in front.
++  var sg = c.createLinearGradient(0, 990, 0, H);
++  sg.addColorStop(0, "#eef3fd"); sg.addColorStop(1, "#c3d0ea");
++  c.fillStyle = sg;
++  c.beginPath(); c.moveTo(0, 1020);
++  for (var sx = 0; sx <= W; sx += 140) c.quadraticCurveTo(sx + 70, 990 + r() * 30, sx + 140, 1012 + r() * 20);
++  c.lineTo(W, H); c.lineTo(0, H); c.closePath(); c.fill();
++
++  // The big tree (bottom right).
++  var tx = 1700, tb = 1060, th = 470;
++  for (var t = 0; t < 7; t++) {
++    var ty = tb - t * th * 0.13, tw = 190 * (1 - t * 0.13), tH = th * 0.24;
++    c.fillStyle = t % 2 ? "#174d2a" : "#123f22";
++    c.beginPath(); c.moveTo(tx - tw, ty); c.quadraticCurveTo(tx - tw * 0.4, ty - tH * 0.5, tx, ty - tH);
++    c.quadraticCurveTo(tx + tw * 0.4, ty - tH * 0.5, tx + tw, ty); c.closePath(); c.fill();
++    c.fillStyle = "rgba(240,246,255,0.85)";
++    c.beginPath(); c.moveTo(tx - tw, ty); c.quadraticCurveTo(tx, ty - 22, tx + tw, ty); c.quadraticCurveTo(tx, ty - 10, tx - tw, ty); c.fill();
++  }
++  var balls = ["#d4141e", "#e0a915", "#c0c8d8", "#b0101a"];
++  for (var o = 0; o < 26; o++) {
++    var oy = tb - 30 - r() * (th * 0.82), half = 180 * (1 - (tb - oy) / (th * 1.05)), ox = tx + (r() * 2 - 1) * half * 0.8;
++    var og = c.createRadialGradient(ox - 4, oy - 4, 1, ox, oy, 11);
++    og.addColorStop(0, "#fff"); og.addColorStop(0.3, balls[o % 4]); og.addColorStop(1, "#300808");
++    c.fillStyle = og; c.beginPath(); c.arc(ox, oy, 10, 0, Math.PI * 2); c.fill();
++  }
++  star(c, tx, tb - th * 0.93 - 18, 30);
++
++  // The garland: heavy along the top right and the top left, pine cones, a few sprigs down the left edge.
++  for (var n = 0; n < 230; n++) {
++    var gx = 1100 + r() * 860, gy = -20 + r() * 120 + Math.max(0, (gx - 1500)) * 0.12;
++    needle(c, gx, gy, 50 + r() * 60, r() * Math.PI * 2, r);
++  }
++  for (var m = 0; m < 120; m++) needle(c, -20 + r() * 280, -20 + r() * 110, 45 + r() * 50, r() * Math.PI * 2, r);
++  for (var l = 0; l < 60; l++) needle(c, -30 + r() * 90, 80 + r() * 360, 40 + r() * 40, r() * Math.PI * 2, r);
++  [[1240, 70], [1490, 110], [1890, 150], [1830, 40], [1370, 40], [160, 60], [1610, 60]].forEach(function (q, i) {
++    cone(c, q[0], q[1] + 20, 56 + (i % 3) * 8, 0.25 - (i % 2) * 0.5);
++  });
++
++  // Vignette.
++  var v = c.createRadialGradient(W / 2, H / 2, H * 0.5, W / 2, H / 2, H * 1.05);
++  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(2,6,20,0.55)");
++  c.fillStyle = v; c.fillRect(0, 0, W, H);
++}
++
++function star(c, x, y, R) {
++  var glow = c.createRadialGradient(x, y, 2, x, y, R * 3);
++  glow.addColorStop(0, "rgba(255,230,140,0.9)"); glow.addColorStop(1, "rgba(255,230,140,0)");
++  c.fillStyle = glow; c.beginPath(); c.arc(x, y, R * 3, 0, Math.PI * 2); c.fill();
++  c.fillStyle = "#ffd75a"; c.beginPath();
++  for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? R * 0.45 : R; c.lineTo(x + rr * Math.cos(a), y + rr * Math.sin(a)); }
++  c.closePath(); c.fill();
++}
++
++/** The twinkling bulbs: along the garland and spiralling round the tree (DOM, so they can blink). */
++function lights() {
++  var r = rng(77), out = [], warm = ["#fff1c2", "#ffd56b", "#ffe9a0", "#ffb84a"];
++  for (var i = 0; i < 26; i++) {
++    var x = 1120 + i * 32 + r() * 10, y = 40 + Math.sin(i * 0.55) * 30 + Math.max(0, x - 1500) * 0.12 + r() * 14;
++    out.push([x, y, warm[i % 4], 9 + r() * 5]);
++  }
++  for (var j = 0; j < 10; j++) out.push([10 + j * 27 + r() * 8, 40 + Math.sin(j) * 24 + r() * 14, warm[j % 4], 9 + r() * 4]);
++  for (var k = 0; k < 8; k++) out.push([20 + r() * 50, 120 + k * 42, warm[k % 4], 8 + r() * 4]);
++  var colors = ["#ffe27a", "#ff5a4a", "#7ad0ff", "#9cff8a", "#ffffff"];
++  for (var t = 0; t < 44; t++) {   // the tree: a spiral of small coloured bulbs
++    var f = t / 44, ty = 1060 - 30 - f * 400, half = 175 * (1 - f) + 8, tx = 1700 + Math.sin(t * 1.7) * half * 0.85;
++    out.push([tx, ty, colors[t % 5], 7 + r() * 3]);
++  }
++  var box = $("#twinkles");
++  out.forEach(function (p, n) {
++    var s = el("span");
++    s.style.cssText = "left:" + (p[0] - p[3] / 2) + "px;top:" + (p[1] - p[3] / 2) + "px;width:" + p[3] + "px;height:" + p[3] +
++      "px;background:" + p[2] + ";box-shadow:0 0 " + Math.round(p[3] * 1.6) + "px " + Math.round(p[3] * 0.6) + "px " + p[2] +
++      ";animation-delay:" + (r() * 2.6).toFixed(2) + "s";
++    box.appendChild(s);
++  });
++}
++
++function paintWreath() {
++  var cv = $("#wreath"), c = cv.getContext("2d"), r = rng(5), cx = 85, cy = 88, R = 58;
++  for (var i = 0; i < 90; i++) {
++    var a = r() * Math.PI * 2, d = R + (r() - 0.5) * 18;
++    needle(c, cx + Math.cos(a) * d, cy + Math.sin(a) * d, 22 + r() * 16, a + Math.PI / 2 + (r() - 0.5) * 0.8, r);
++  }
++  var berries = ["#d4141e", "#e0a915"];
++  for (var b = 0; b < 12; b++) {
++    var ba = b / 12 * Math.PI * 2 + 0.2, bx = cx + Math.cos(ba) * R, by = cy + Math.sin(ba) * R;
++    c.fillStyle = berries[b % 2]; c.beginPath(); c.arc(bx, by, 6, 0, Math.PI * 2); c.fill();
++    c.fillStyle = "rgba(255,255,255,0.7)"; c.beginPath(); c.arc(bx - 2, by - 2, 2, 0, Math.PI * 2); c.fill();
++  }
++  // The red bow at the top.
++  c.fillStyle = "#d0141e";
++  c.beginPath(); c.moveTo(cx, cy - R); c.quadraticCurveTo(cx - 40, cy - R - 34, cx - 34, cy - R + 6); c.closePath(); c.fill();
++  c.beginPath(); c.moveTo(cx, cy - R); c.quadraticCurveTo(cx + 40, cy - R - 34, cx + 34, cy - R + 6); c.closePath(); c.fill();
++  c.beginPath(); c.moveTo(cx - 4, cy - R); c.lineTo(cx - 20, cy - R + 40); c.lineTo(cx - 8, cy - R + 36); c.closePath(); c.fill();
++  c.beginPath(); c.moveTo(cx + 4, cy - R); c.lineTo(cx + 20, cy - R + 40); c.lineTo(cx + 8, cy - R + 36); c.closePath(); c.fill();
++  c.fillStyle = "#a00e16"; c.beginPath(); c.arc(cx, cy - R, 9, 0, Math.PI * 2); c.fill();
++}
++
++// MARK: - Falling snow
++
++var flakes = [], snowOn = true, last = 0;
++function startSnow() {
++  var r = rng(9);
++  for (var i = 0; i < 160; i++) flakes.push({ x: r() * W, y: r() * H, s: 1 + r() * 2.6, v: 0.5 + r() * 1.3, p: r() * 6.28, w: 0.4 + r() });
++  requestAnimationFrame(frame);
++}
++function frame(t) {
++  requestAnimationFrame(frame);
++  if (!snowOn || t - last < 33) return;
++  var dt = last ? Math.min(3, (t - last) / 33) : 1;
++  last = t;
++  var c = $("#snow").getContext("2d");
++  c.clearRect(0, 0, W, H);
++  c.fillStyle = "rgba(255,255,255,0.88)";
++  c.beginPath();
++  for (var i = 0; i < flakes.length; i++) {
++    var f = flakes[i];
++    f.p += 0.02 * dt; f.y += f.v * dt; f.x += Math.sin(f.p) * f.w * 0.6 * dt;
++    if (f.y > H + 6) { f.y = -6; f.x = Math.random() * W; }
++    if (f.x < -6) f.x = W + 6; else if (f.x > W + 6) f.x = -6;
++    c.moveTo(f.x + f.s, f.y); c.arc(f.x, f.y, f.s, 0, Math.PI * 2);
++  }
++  c.fill();
++}
++
++// MARK: - Clock and weather
++
++var MONTHS = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
++function tick() {
++  var d = new Date();
++  $("#time").textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
++  $("#date").textContent = d.getDate() + " DE " + MONTHS[d.getMonth()];
++  setTimeout(tick, 60000 - (d.getSeconds() * 1000 + d.getMilliseconds()) + 50);
++}
++window.onWeather = function () {
++  var w = {};
++  try { w = JSON.parse(bridge.weather()); } catch (e) {}
++  if (!w.main || !w.main.ok) return;
++  $("#wxicon").src = "../symbols/" + w.main.icon + ".png";
++  $("#wxtemp").textContent = w.main.temp;
++  $("#wxcity").textContent = w.main.city + (w.second && w.second.ok ? "  ·  " + w.second.city + " " + w.second.temp : "");
++};
++
++// MARK: - Data
++
++var items = [], picks = [], xmas = [], hasKey = false;
++var APP_ORDER = ["com.world.youcinetv", "org.smarttube.stable", "com.stremio.one", "com.globo.globotv", "com.disney.disneyplus",
++  "com.netflix.ninja", "com.amazon.amazonvideo.livingroom", "com.spotify.tv.android", "com.google.android.youtube.tv", "com.ilv.vradio"];
++var HIDE = ["io.freemytv"];
++
++function loadItems() { try { items = JSON.parse(bridge.items()); } catch (e) { items = []; } }
++function loadPicks() {
++  hasKey = !!bridge.hasKey();
++  try { picks = JSON.parse(bridge.picks("")); } catch (e) { picks = []; }
++}
++function myApps() {
++  var apps = items.filter(function (it) { return it.kind === "app" && !it.system && HIDE.indexOf(it.pkg) < 0; });
++  apps.sort(function (a, b) {
++    var ia = APP_ORDER.indexOf(a.pkg), ib = APP_ORDER.indexOf(b.pkg);
++    ia = ia < 0 ? 99 : ia; ib = ib < 0 ? 99 : ib;
++    return ia - ib || a.label.localeCompare(b.label, "pt");
++  });
++  return apps;
++}
++window.onChristmas = function (json) {
++  try { xmas = JSON.parse(json); } catch (e) { xmas = []; }
++  if (section === "home" || section === "movies") rerender();
++};
++window.onPicks = function () {
++  loadPicks();
++  if (section === "home" || section === "movies") rerender();
++};
++
++// MARK: - Drawing the sections
++
++var section = "home", rows = [], grid = [];
++
++function poster(p, x) {
++  var e = el("div", "p");
++  e.dataset.id = p.id; e.dataset.caption = p.title + (p.app ? "  ·  " + p.app : p.year ? "  ·  " + p.year : "");
++  e.style.left = x + "px";
++  var t = el("div", "t", p.title);
++  e.appendChild(t);
++  var img = el("img");
++  img.onerror = function () { img.remove(); };
++  img.onload = function () { t.style.display = "none"; };
++  img.src = p.poster;
++  e.appendChild(img);
++  return e;
++}
++
++function appTile(a, x) {
++  var e = el("div", "a");
++  e.dataset.id = a.id; e.dataset.caption = a.label;
++  e.style.left = x + "px";
++  var img = el("img"); img.src = "https://tv.local/appicon/" + encodeURIComponent(a.pkg);
++  e.appendChild(img);
++  e.insertAdjacentHTML("beforeend", '<svg class="hat"><use href="#hat"/></svg>');
++  return e;
++}
++
++function keyCard(x, top) {
++  var e = el("div", "card wide");
++  e.dataset.action = "settings"; e.style.left = x + "px"; e.style.top = top + "px";
++  e.innerHTML = "🎄 Filmes recomendados e filmes de Natal<small>Para ver os pôsteres aqui, adicione sua chave gratuita do TMDB:<br>" +
++    "Configurações → Ajustes do Free My TV → Ajustes do Início → Chave do TMDB.<br>Aperte OK para abrir.</small>";
++  return e;
++}
++
++function renderHome(content) {
++  var recs = picks.slice(0, 6), list = recs.concat(xmas);
++  content.appendChild(Object.assign(el("div", "label", recs.length ? "RECOMENDADOS PARA VOCÊ" : xmas.length ? "FILMES DE NATAL" : "PARA ASSISTIR"), { style: "left:20px;top:0" }));
++  var box1 = el("div", "rowbox"); box1.style.cssText = "top:0;height:440px";
++  var tr1 = el("div", "track"); box1.appendChild(tr1);
++  var row1 = [];
++  if (!list.length) { var k = keyCard(0, 40); tr1.appendChild(k); row1.push(k); }
++  list.forEach(function (p, i) {
++    var x = i * 262, e = poster(p, x);
++    tr1.appendChild(e); row1.push(e);
++    if (recs.length && i === recs.length) {
++      var gl = el("div", "grouplabel", "FILMES DE NATAL"); gl.style.left = (x + 12) + "px"; tr1.appendChild(gl);
++    }
++  });
++  content.appendChild(box1);
++  var cap = el("div", "caption"); cap.id = "caption"; content.appendChild(cap);
++
++  content.appendChild(Object.assign(el("div", "label", "MEUS APLICATIVOS"), { style: "left:20px;top:452px" }));
++  var box2 = el("div", "rowbox"); box2.style.cssText = "top:470px;height:270px";
++  var tr2 = el("div", "track"); tr2.style.left = "40px"; box2.appendChild(tr2);
++  var row2 = [];
++  myApps().forEach(function (a, i) { var e = appTile(a, i * 204); tr2.appendChild(e); row2.push(e); });
++  content.appendChild(box2);
++  rows = [row1, row2].filter(function (r) { return r.length; });
++  rowIndex = rows.map(function () { return 0; });
++}
++
++function renderGrid(content, title, cells, cellW, cellH, cols) {
++  content.appendChild(Object.assign(el("div", "label", title), { style: "left:20px;top:0" }));
++  var box = el("div", "rowbox"); box.style.cssText = "top:30px;bottom:0";
++  var tr = el("div", "track"); tr.style.left = "20px"; box.appendChild(tr);
++  grid = [];
++  cells.forEach(function (e, i) {
++    var col = i % cols, row = Math.floor(i / cols);
++    e.style.left = (col * cellW) + "px"; e.style.top = (30 + row * cellH) + "px";
++    e.dataset.x = col; e.dataset.y = row;
++    tr.appendChild(e); grid.push(e);
++  });
++  content.appendChild(box);
++}
++
++function card(label, sub, action, icon) {
++  var e = el("div", "card");
++  e.dataset.action = action;
++  if (icon) { var im = el("img"); im.src = icon; e.appendChild(im); }
++  e.appendChild(document.createTextNode(label));
++  if (sub) e.appendChild(el("small", null, sub));
++  return e;
++}
++
++function has(pkg) { return items.some(function (it) { return it.pkg === pkg; }); }
++
++function render(sec) {
++  section = sec;
++  var menu = document.querySelectorAll(".m");
++  for (var i = 0; i < menu.length; i++) menu[i].classList.toggle("current", menu[i].dataset.sec === sec);
++  var content = $("#content");
++  content.innerHTML = "";
++  rows = []; grid = [];
++  if (sec === "home") renderHome(content);
++  else if (sec === "movies") {
++    var cells = picks.concat(xmas).map(function (p) { var e = poster(p, 0); e.style.top = "0"; return e; });
++    if (!cells.length) cells = [keyCard(0, 0)];
++    renderGrid(content, "FILMES", cells, 262, 400, 6);
++  } else if (sec === "music") {
++    var m = [];
++    if (has("com.spotify.tv.android")) {
++      m.push(card("Spotify", "Suas músicas e playlists", "app:com.spotify.tv.android", "https://tv.local/appicon/com.spotify.tv.android"));
++      m.push(card("Músicas de Natal", "Procurar no Spotify", "uri:com.spotify.tv.android|spotify:search:natal", "https://tv.local/appicon/com.spotify.tv.android"));
++    }
++    if (has("org.smarttube.stable")) m.push(card("Clipes de Natal", "Procurar no SmartTube", "uri:org.smarttube.stable|https://www.youtube.com/results?search_query=musicas+de+natal", "https://tv.local/appicon/org.smarttube.stable"));
++    if (has("com.ilv.vradio")) m.push(card("Rádio", "Rádios ao vivo", "app:com.ilv.vradio", "https://tv.local/appicon/com.ilv.vradio"));
++    renderGrid(content, "MÚSICAS", m, 440, 270, 3);
++  } else if (sec === "settings") {
++    var s = [card("Ajustes do Free My TV", "Tela inicial, chave do TMDB, voltar ao Original", "id:set-home", "../symbols/sparkles.png"),
++      card("Ajustes da TV", "Imagem, som, apps e sistema", "id:set-tv", "../symbols/tv_settings.png"),
++      card("Wi-Fi", "Redes e internet", "uri:|wifi", "../symbols/wifi.png")];
++    items.filter(function (it) { return it.kind === "live" || it.kind === "input"; }).forEach(function (it) {
++      s.push(card(it.label, it.kind === "live" ? "Canais da antena" : it.connected === false ? "Sem sinal" : "Entrada", "id:" + it.id, "../symbols/" + (it.kind === "live" ? "live_tv" : "hdmi") + ".png"));
++    });
++    renderGrid(content, "CONFIGURAÇÕES", s, 440, 270, 3);
++  }
++}
++
++function rerender() {
++  var z = zone, id = focused && (focused.dataset.id || focused.dataset.action);
++  render(section);
++  if (z === "content") {
++    var all = rows.length ? rows.reduce(function (a, r) { return a.concat(r); }, []) : grid;
++    var again = all.filter(function (e) { return (e.dataset.id || e.dataset.action) === id; })[0];
++    if (again) { zone = "content"; locate(again); setFocus(again); return; }
++    focusSide(sideIndex);
++  }
++}
++
++// MARK: - Focus and the remote
++
++var zone = "side", sideIndex = 0, focused = null, rowAt = 0, rowIndex = [];
++function sideButtons() { return Array.prototype.slice.call(document.querySelectorAll(".m")); }
++
++function setFocus(e) {
++  if (focused) focused.classList.remove("focused");
++  focused = e;
++  if (!e) return;
++  e.classList.add("focused");
++  var cap = $("#caption");
++  if (cap) cap.textContent = zone === "content" && rows.length && rowAt === 0 && e.classList.contains("p") ? e.dataset.caption : "";
++  if (zone === "content") scrollTo(e);
++}
++
++/** Keeps the focused item in view: rows scroll sideways, grids up and down. */
++function scrollTo(e) {
++  var tr = e.parentNode, view = $("#content").clientWidth - 120;
++  if (rows.length) {
++    var x = e.offsetLeft, shift = Math.max(0, x + e.offsetWidth - view);
++    tr.style.transform = "translateX(" + (-shift) + "px)";
++  } else {
++    var y = e.offsetTop, vh = $("#content").clientHeight - 80, sy = Math.max(0, y + e.offsetHeight - vh);
++    tr.style.transform = "translateY(" + (-sy) + "px)";
++  }
++}
++
++function focusSide(i) {
++  var b = sideButtons();
++  zone = "side";
++  sideIndex = Math.max(0, Math.min(b.length - 1, i));
++  setFocus(b[sideIndex]);
++  var sec = b[sideIndex].dataset.sec;
++  if (sec !== "search" && sec !== section) render(sec);
++}
++
++function focusContent() {
++  if (rows.length) { zone = "content"; rowAt = 0; setFocus(rows[0][rowIndex[0] || 0]); }
++  else if (grid.length) { zone = "content"; setFocus(grid[0]); }
++}
++
++/** Which row and index the element is in (after a redraw). */
++function locate(e) {
++  for (var r = 0; r < rows.length; r++) { var i = rows[r].indexOf(e); if (i >= 0) { rowAt = r; rowIndex[r] = i; } }
++}
++
++function move(dx, dy) {
++  if (zone === "side") {
++    if (dy) focusSide(sideIndex + dy);
++    else if (dx > 0) focusContent();
++    return;
++  }
++  if (rows.length) {
++    if (dx) {
++      var i = rowIndex[rowAt] + dx;
++      if (i < 0) { focusSide(sideIndex); return; }
++      if (i >= rows[rowAt].length) return;
++      rowIndex[rowAt] = i; setFocus(rows[rowAt][i]);
++    } else {
++      var r = rowAt + dy;
++      if (r < 0 || r >= rows.length) return;
++      // Into the other row: the item nearest on screen (each row keeps its own scroll).
++      var from = focused.getBoundingClientRect(), best = 0, bd = 1e9;
++      rows[r].forEach(function (e, n) { var b = e.getBoundingClientRect(), d = Math.abs((b.left + b.width / 2) - (from.left + from.width / 2)); if (d < bd) { bd = d; best = n; } });
++      rowAt = r; rowIndex[r] = best; setFocus(rows[r][best]);
++    }
++    return;
++  }
++  var x = +focused.dataset.x + dx, y = +focused.dataset.y + dy;
++  if (x < 0) { focusSide(sideIndex); return; }
++  var next = grid.filter(function (e) { return +e.dataset.x === x && +e.dataset.y === y; })[0];
++  if (!next && dy > 0) next = grid.filter(function (e) { return +e.dataset.y === y; }).pop();   // a shorter last row
++  if (next) setFocus(next);
++}
++
++function activate() {
++  if (zone === "side") {
++    if (sideButtons()[sideIndex].dataset.sec === "search") bridge.openUri("", "search");
++    else focusContent();
++    return;
++  }
++  var e = focused, a = e.dataset.action;
++  if (!a) { bridge.open(e.dataset.id); return; }
++  if (a === "settings") bridge.open("set-home");
++  else if (a.indexOf("id:") === 0) bridge.open(a.slice(3));
++  else if (a.indexOf("app:") === 0) bridge.open("app-" + a.slice(4));
++  else if (a.indexOf("uri:") === 0) { var p = a.slice(4).split("|"); bridge.openUri(p[0], p[1]); }
++}
++
++document.addEventListener("keydown", function (e) {
++  var d = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key];
++  if (d) move(d[0], d[1]);
++  else if (e.key === "Enter") { if (!e.repeat) activate(); }
++  else return;
++  e.preventDefault();
++});
++document.addEventListener("focusin", function (e) { if (e.target && e.target.blur) e.target.blur(); });
++
++window.onBack = function () {
++  if (zone === "content") focusSide(sideIndex);
++  else if (section !== "home") focusSide(0);
++};
++window.reset = function () { focusSide(0); render("home"); setFocus(sideButtons()[0]); };
++window.onResume = function () {
++  snowOn = true;
++  loadItems(); loadPicks(); onWeather();
++  if (hasKey && !xmas.length) bridge.christmas();
++  rerender();
++};
++
++// MARK: - A computer's browser (no TV): sample data
++
++function mockBridge() {
++  var apps = [["com.world.youcinetv", "YouCine"], ["org.smarttube.stable", "SmartTube"], ["com.stremio.one", "Stremio"], ["com.globo.globotv", "Globoplay"],
++    ["com.disney.disneyplus", "Disney+"], ["com.spotify.tv.android", "Spotify"], ["com.ilv.vradio", "VRadio"]];
++  var t = ["Esqueceram de Mim", "O Grinch", "Um Duende em Nova York", "O Expresso Polar", "Klaus", "Simplesmente Amor", "Milagre na Rua 34", "O Estranho Mundo de Jack"];
++  return {
++    items: function () {
++      var out = apps.map(function (a) { return { id: "app-" + a[0], kind: "app", label: a[1], pkg: a[0], cat: "movies", system: false }; });
++      out.push({ id: "in-0", kind: "live", label: "TV ao Vivo", symbol: "tv", cat: "live", connected: true });
++      out.push({ id: "in-1", kind: "input", label: "HDMI 1", symbol: "hdmi", cat: "live", connected: false });
++      return JSON.stringify(out);
++    },
++    hasKey: function () { return true; },
++    picks: function () { return JSON.stringify(t.slice(0, 4).map(function (x, i) { return { id: "pick-" + i, title: x, poster: "", app: "Disney+" }; })); },
++    christmas: function () { setTimeout(function () { onChristmas(JSON.stringify(t.slice(4).map(function (x, i) { return { id: "xmas-" + i, title: x, poster: "", year: "2019" }; }))); }, 50); },
++    weather: function () { return JSON.stringify({ main: { ok: true, city: "Murici", temp: "26°", icon: "partly_cloudy_night" }, second: { ok: true, city: "Maceió", temp: "27°" } }); },
++    open: function (id) { toast("abrir " + id); }, openUri: function (p, u) { toast("abrir " + u); }, refresh: function () {}
++  };
++}
++var toastTimer;
++function toast(s) { var t = $("#toast"); t.textContent = s; t.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove("on"); }, 2000); }
++
++// MARK: - Start
++
++paintScene();
++paintWreath();
++lights();
++startSnow();
++tick();
++loadItems();
++loadPicks();
++onWeather();
++render("home");
++focusSide(0);
++if (hasKey) bridge.christmas();
++setInterval(function () { bridge.refresh(); onWeather(); }, 10 * 60000);
 diff --git a/app/src/io/freemytv/DreamView.java b/app/src/io/freemytv/DreamView.java
 index ac2b700..4a824c3 100644
 --- a/app/src/io/freemytv/DreamView.java
@@ -829,10 +1589,10 @@ index ac2b700..4a824c3 100644
          if (g == null || glassShader == null || alpha <= 0.004f) return;
 diff --git a/app/src/io/freemytv/GlassHome.java b/app/src/io/freemytv/GlassHome.java
 new file mode 100644
-index 0000000..deae766
+index 0000000..0365291
 --- /dev/null
 +++ b/app/src/io/freemytv/GlassHome.java
-@@ -0,0 +1,253 @@
+@@ -0,0 +1,380 @@
 +package io.freemytv;
 +
 +import android.app.Activity;
@@ -876,6 +1636,8 @@ index 0000000..deae766
 +    private final Map<String, HomeApps.Item> items = new ConcurrentHashMap<>();
 +    private final Map<String, byte[]> icons = new ConcurrentHashMap<>();
 +    private final HomeData.Listener onData = this::weatherChanged;
++    private final Recs.Listener onRecs = () -> js("window.onPicks && onPicks()");
++    private final java.util.concurrent.ExecutorService io = java.util.concurrent.Executors.newSingleThreadExecutor();
 +    private boolean loaded;
 +
 +    /** Packages by category, beyond what the apps say of themselves (ApplicationInfo.category). */
@@ -925,8 +1687,9 @@ index 0000000..deae766
 +        web.setWebViewClient(new WebViewClient() {
 +            @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
 +                Uri u = req.getUrl();
-+                if (!"tv.local".equals(u.getHost()) || u.getPath() == null || !u.getPath().startsWith("/icon/")) return null;
-+                byte[] png = icon(u.getLastPathSegment());
++                if (!"tv.local".equals(u.getHost()) || u.getPath() == null) return null;
++                byte[] png = u.getPath().startsWith("/appicon/") ? squareIcon(u.getLastPathSegment())
++                        : u.getPath().startsWith("/icon/") ? icon(u.getLastPathSegment()) : null;
 +                if (png == null) return new WebResourceResponse("text/plain", "utf-8", 404, "Not Found", null, null);
 +                return new WebResourceResponse("image/png", null, new ByteArrayInputStream(png));
 +            }
@@ -940,8 +1703,9 @@ index 0000000..deae766
 +                web.requestFocus();
 +            }
 +        });
-+        web.loadUrl("file:///android_asset/glass/index.html");
++        web.loadUrl("file:///android_asset/" + Config.HOME_STYLE + "/index.html");
 +        data.addListener(onData);
++        Recs.get(a).addListener(onRecs);
 +    }
 +
 +    View view() { return web; }
@@ -950,6 +1714,7 @@ index 0000000..deae766
 +        web.onResume();
 +        web.requestFocus();
 +        data.refreshIfStale();
++        Recs.get(activity).refreshIfStale();
 +        js("window.onResume && onResume()");
 +    }
 +
@@ -960,6 +1725,8 @@ index 0000000..deae766
 +
 +    void destroy() {
 +        data.removeListener(onData);
++        Recs.get(activity).removeListener(onRecs);
++        io.shutdownNow();
 +        web.destroy();
 +    }
 +
@@ -988,6 +1755,53 @@ index 0000000..deae766
 +        byte[] png = out.toByteArray();
 +        icons.put(id, png);
 +        return png;
++    }
++
++    /** The app's own (square) icon at 256 px, for the Christmas screen's app row. */
++    private byte[] squareIcon(String pkg) {
++        String k = "sq:" + pkg;
++        byte[] cached = icons.get(k);
++        if (cached != null) return cached;
++        try {
++            android.graphics.drawable.Drawable d = activity.getPackageManager().getApplicationIcon(pkg);
++            Bitmap b = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_8888);
++            android.graphics.Canvas cv = new android.graphics.Canvas(b);
++            d.setBounds(0, 0, 256, 256);
++            d.draw(cv);
++            ByteArrayOutputStream out = new ByteArrayOutputStream();
++            b.compress(Bitmap.CompressFormat.PNG, 100, out);
++            byte[] png = out.toByteArray();
++            icons.put(k, png);
++            return png;
++        } catch (Exception e) {
++            return null;
++        }
++    }
++
++    private static final String POSTER = "https://image.tmdb.org/t/p/w342";
++    private static final String STREMIO = "com.stremio.one";
++
++    /** Popular Christmas movies (TMDB keyword "christmas"), kept for a day; each opens on its page in Stremio. */
++    private String christmasMovies() throws Exception {
++        android.content.SharedPreferences sp = activity.getSharedPreferences("natal", Context.MODE_PRIVATE);
++        long now = System.currentTimeMillis();
++        String saved = sp.getString("movies", null);
++        if (saved != null && now - sp.getLong("at", 0) < 24 * 3600_000L) return saved;
++        JSONArray results = Recs.tmdb("/discover/movie?with_keywords=207317&language=pt-BR&region=BR&include_adult=false"
++                + "&sort_by=popularity.desc&vote_count.gte=150").getJSONArray("results");
++        JSONArray out = new JSONArray();
++        for (int i = 0; i < results.length() && out.length() < 16; i++) {
++            JSONObject m = results.getJSONObject(i);
++            String poster = m.optString("poster_path", "");
++            if (poster.isEmpty() || "null".equals(poster)) continue;
++            String imdb = "";
++            try { imdb = Recs.tmdb("/movie/" + m.getInt("id") + "/external_ids").optString("imdb_id", ""); } catch (Exception ignored) {}
++            out.put(new JSONObject().put("id", "xmas-" + m.getInt("id")).put("title", m.optString("title"))
++                    .put("poster", POSTER + poster).put("imdb", imdb == null || "null".equals(imdb) ? "" : imdb)
++                    .put("year", m.optString("release_date", "").length() >= 4 ? m.optString("release_date").substring(0, 4) : ""));
++        }
++        sp.edit().putString("movies", out.toString()).putLong("at", now).apply();
++        return out.toString();
 +    }
 +
 +    private static String category(Context c, String pkg) {
@@ -1035,8 +1849,13 @@ index 0000000..deae766
 +                    if (HIDDEN.contains(pkg) || HomeApps.isHidden(pkg)) continue;
 +                    String id = "app-" + pkg;
 +                    next.put(id, HomeApps.app(pkg, app[1]));
++                    boolean system = false;
++                    try {
++                        system = (activity.getPackageManager().getApplicationInfo(pkg, 0).flags & ApplicationInfo.FLAG_SYSTEM) != 0;
++                    } catch (PackageManager.NameNotFoundException ignored) {
++                    }
 +                    out.put(new JSONObject().put("id", id).put("kind", "app").put("label", app[1]).put("pkg", pkg)
-+                            .put("cat", category(activity, pkg)));
++                            .put("cat", category(activity, pkg)).put("system", system));
 +                }
 +                int n = 0;
 +                for (HomeApps.Item it : HomeApps.allInputs(activity)) {
@@ -1053,7 +1872,8 @@ index 0000000..deae766
 +                        .put("symbol", "sparkles").put("cat", "settings"));
 +                out.put(new JSONObject().put("id", "set-tv").put("kind", "setting").put("label", "Ajustes da TV")
 +                        .put("symbol", "tv_settings").put("cat", "settings"));
-+                items.clear();
++                // Posters (pick-, xmas-) stay: they come from their own calls.
++                items.keySet().removeIf(k -> k.startsWith("app-") || k.startsWith("in-") || k.startsWith("set-"));
 +                items.putAll(next);
 +            } catch (Exception e) {
 +                AppLog.w("glass: items: " + e.getMessage());
@@ -1079,6 +1899,73 @@ index 0000000..deae766
 +            } catch (Exception e) {
 +                return "{}";
 +            }
++        }
++
++        @JavascriptInterface public boolean hasKey() {
++            return Recs.hasKey(activity);
++        }
++
++        /** This hour's picks (posters) from Free My TV's recommendations; null kind = movies and shows. */
++        @JavascriptInterface public String picks(String kind) {
++            JSONArray out = new JSONArray();
++            try {
++                for (Recs.Pick p : Recs.get(activity).now(kind == null || kind.isEmpty() ? null : kind)) {
++                    if (p.photo != null || p.poster == null || p.poster.isEmpty() || p.pkg == null) continue;
++                    String id = "pick-" + Recs.key(p);
++                    items.put(id, HomeApps.app(p.pkg, p.title, p.link));
++                    String poster = p.poster.startsWith("http") ? p.poster : POSTER + p.poster;
++                    out.put(new JSONObject().put("id", id).put("title", p.title).put("poster", poster)
++                            .put("app", Recs.serviceName(p)).put("kind", p.kind));
++                }
++            } catch (Exception e) {
++                AppLog.w("natal: picks: " + e.getMessage());
++            }
++            return out.toString();
++        }
++
++        /** Christmas movies, handed back to window.onChristmas(json) (fetched off the page's thread). */
++        @JavascriptInterface public void christmas() {
++            io.execute(() -> {
++                String json = "[]";
++                try {
++                    if (Recs.hasKey(activity)) {
++                        json = christmasMovies();
++                        JSONArray a = new JSONArray(json);
++                        boolean stremio = HomeApps.launchIntent(activity.getPackageManager(), STREMIO) != null;
++                        for (int i = 0; i < a.length(); i++) {
++                            JSONObject m = a.getJSONObject(i);
++                            String imdb = m.optString("imdb");
++                            items.put(m.getString("id"), stremio && !imdb.isEmpty()
++                                    ? HomeApps.app(STREMIO, m.optString("title"), "stremio:///detail/movie/" + imdb)
++                                    : HomeApps.app("com.world.youcinetv", m.optString("title")));
++                        }
++                    }
++                } catch (Exception e) {
++                    AppLog.w("natal: christmas: " + e.getMessage());
++                }
++                final String result = JSONObject.quote(json);
++                activity.runOnUiThread(() -> web.evaluateJavascript("window.onChristmas && onChristmas(" + result + ")", null));
++            });
++        }
++
++        /** Opens an address in an app (a Spotify search, say); "search" opens the TV's own search. */
++        @JavascriptInterface public void openUri(String pkg, String uri) {
++            activity.runOnUiThread(() -> {
++                try {
++                    if ("search".equals(uri)) {
++                        android.content.Intent s = new android.content.Intent("android.search.action.GLOBAL_SEARCH")
++                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
++                        if (s.resolveActivity(activity.getPackageManager()) == null) s = new android.content.Intent(android.content.Intent.ACTION_ASSIST).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
++                        activity.startActivity(s);
++                    } else if ("wifi".equals(uri)) {
++                        activity.startActivity(new android.content.Intent(android.provider.Settings.ACTION_WIFI_SETTINGS).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
++                    } else {
++                        HomeApps.open(activity, HomeApps.app(pkg, pkg, uri), null);
++                    }
++                } catch (RuntimeException e) {
++                    AppLog.w("natal: open " + uri + ": " + e.getMessage());
++                }
++            });
 +        }
 +
 +        @JavascriptInterface public void refresh() {
@@ -1387,8 +2274,26 @@ index de6dc60..3c0ee81 100644
      }
  
      /**
+diff --git a/app/src/io/freemytv/Recs.java b/app/src/io/freemytv/Recs.java
+index 5ea4e95..5528f22 100644
+--- a/app/src/io/freemytv/Recs.java
++++ b/app/src/io/freemytv/Recs.java
+@@ -1188,6 +1188,13 @@ final class Recs {
+         return request(path, key);
+     }
+ 
++    /** One TMDB request with the key in use (for the web home screens' own lists). */
++    static JSONObject tmdb(String path) throws IOException, org.json.JSONException {
++        String key = key();
++        if (key.isEmpty()) throw new IOException("no TMDB key");
++        return request(path, key);
++    }
++
+     private static final String REJECTED = "TMDB rejected the key";
+ 
+     private static JSONObject request(String path, String key) throws IOException, org.json.JSONException {
 diff --git a/build.sh b/build.sh
-index e68f00e..d236db6 100755
+index e68f00e..d25b9d8 100755
 --- a/build.sh
 +++ b/build.sh
 @@ -49,11 +49,13 @@ number() {
@@ -1406,34 +2311,38 @@ index e68f00e..d236db6 100755
    CURRENCY="$(prop currency USD)"
  fi
  ASSIST=false; [ "$(prop disable_assistant false)" = "true" ] && ASSIST=true
-@@ -61,6 +63,7 @@ CRYPTO=false; [ "$(prop show_crypto true)" = "true" ] && CRYPTO=true
+@@ -61,6 +63,9 @@ CRYPTO=false; [ "$(prop show_crypto true)" = "true" ] && CRYPTO=true
  ANIMATION=false; [ "$(prop hide_animation false)" = "true" ] && ANIMATION=true
  SAVER=true; [ "$(prop screensaver true)" = "false" ] && SAVER=false
  STREMIO=false; [ "$(prop open_in_stremio false)" = "true" ] && STREMIO=true
-+GLASS=false; [ "$(prop home_style classic)" = "glass" ] && GLASS=true
++HOME_STYLE="$(prop home_style classic)"
++case "$HOME_STYLE" in classic|glass|natal) ;; *) echo "config.properties: home_style must be classic, glass or natal" >&2; exit 1 ;; esac
++GLASS=false; [ "$HOME_STYLE" != "classic" ] && GLASS=true
  
  # Servers on your own network (Immich, and the next feature that needs one) often answer in plain HTTP. One rule for
  # all of them: a server given as http:// must be on the local network, and only its host may skip HTTPS
-@@ -124,6 +127,10 @@ final class Config {
+@@ -124,6 +129,11 @@ final class Config {
      static final String LATITUDE = "$LAT";
      static final String LONGITUDE = "$LON";
      static final String CITY = "$(prop city '')";
 +    static final String LATITUDE2 = "$LAT2";
 +    static final String LONGITUDE2 = "$LON2";
 +    static final String CITY2 = "$(prop city2 '')";
-+    static final boolean GLASS = $GLASS;   // home_style=glass: the web home screen in assets/glass
++    static final boolean GLASS = $GLASS;   // home_style=glass or natal: a web home screen (assets/<style>)
++    static final String HOME_STYLE = "$HOME_STYLE";
      static final String LANGUAGE = "$(prop language auto)";
      static final String CURRENCY = "$CURRENCY";
      static final String TEMPERATURE = "$(prop temperature auto)";
 diff --git a/config.example.properties b/config.example.properties
-index 3758fe1..3eeb410 100644
+index 3758fe1..330ce77 100644
 --- a/config.example.properties
 +++ b/config.example.properties
-@@ -12,6 +12,13 @@ latitude=40.7128
+@@ -12,6 +12,14 @@ latitude=40.7128
  longitude=-74.0060
  # Optional: the name shown on the weather card (empty = "Weather").
  city=
-+# Home screen look on Google TV: classic, or glass (a sunset, a frosted side menu and the apps by category).
++# Home screen look on Google TV: classic, glass (a sunset, a frosted side menu and the apps by category) or natal
++# (a Christmas night: snow, garland, posters and the apps with Santa hats).
 +home_style=classic
 +
 +# Optional: a second city whose weather shows next to the first one (decimal degrees and its name).
