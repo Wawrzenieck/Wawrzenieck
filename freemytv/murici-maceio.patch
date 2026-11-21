@@ -866,7 +866,7 @@ index 0000000..4908d7f
 +</html>
 diff --git a/app/assets/natal/natal.css b/app/assets/natal/natal.css
 new file mode 100644
-index 0000000..8fb7ae6
+index 0000000..d5c6338
 --- /dev/null
 +++ b/app/assets/natal/natal.css
 @@ -0,0 +1,98 @@
@@ -963,17 +963,17 @@ index 0000000..8fb7ae6
 +/* The reference's own pictures (on the TV): the snow-capped hat on each app, and the weather icon with no text. */
 +.a .cap { position: absolute; left: -13px; top: -37px; width: 176px; height: 176px; border-radius: 0; z-index: 2; pointer-events: none; }
 +.refwx #wxicon { width: 104px; height: 104px; margin-right: 0; filter: none; }
-+.refwx #wxtemp { display: none; }
++.refwx #wxtemp { font-size: 64px; font-weight: 400; margin-left: 14px; letter-spacing: -1px; }
 +.refwx #wxcity { font-size: 32px; font-weight: 500; color: #f2f5ff; margin: 0 0 0 16px; letter-spacing: 0.5px; line-height: 1.15; }
 +#wxcond, #wxhl { display: none; }
 +.refwx #wxcond { display: block; font-size: 24px; color: rgba(240, 245, 255, 0.92); margin: 4px 0 0 16px; text-shadow: 0 2px 8px rgba(0, 10, 40, 0.8); }
 +.refwx #wxhl { display: block; font-size: 22px; color: #ffe2a0; margin: 4px 0 0 16px; text-shadow: 0 2px 8px rgba(0, 10, 40, 0.8); white-space: nowrap; }
 diff --git a/app/assets/natal/natal.js b/app/assets/natal/natal.js
 new file mode 100644
-index 0000000..c995c4b
+index 0000000..59e1f91
 --- /dev/null
 +++ b/app/assets/natal/natal.js
-@@ -0,0 +1,604 @@
+@@ -0,0 +1,609 @@
 +/* The Christmas home screen (home_style=natal): a snowy night with a garland, a village and a tree, posters from
 + * Free My TV's recommendations and TMDB's Christmas movies, and the TV's apps wearing Santa hats.
 + * Talks to the app through window.TV (GlassHome.Bridge). */
@@ -1234,6 +1234,7 @@ index 0000000..c995c4b
 +  try { w = JSON.parse(bridge.weather()); } catch (e) {}
 +  if (!w.main || !w.main.ok) return;
 +  if (wxOk) {   // the reference's picture; beside it the city, today's sky and its low and high
++    $("#wxtemp").textContent = w.main.temp;
 +    $("#wxcity").textContent = w.main.city + "/AL";
 +    $("#wxcond").textContent = w.main.cond;
 +    $("#wxhl").textContent = "Mín. " + w.main.min + "  ·  Máx. " + w.main.max;
@@ -1561,7 +1562,11 @@ index 0000000..c995c4b
 +var wxOk = false;
 +(function () {   // the reference's pictures, when they're on the TV: the snow-capped hat and the weather icon
 +  var wx = new Image();
-+  wx.onload = function () { wxOk = true; document.body.classList.add("refwx"); $("#wxicon").src = wx.src; onWeather(); };
++  wx.onload = function () {
++    wxOk = true; document.body.classList.add("refwx"); $("#wxicon").src = wx.src;
++    $("#wx").insertBefore($("#wxtemp"), $("#wxicon").nextSibling);   // the current temperature, large, beside the icon
++    onWeather();
++  };
 +  wx.src = "https://tv.local/file/natal-weather.png";
 +})();
 +var bg = $("#bg");
